@@ -1,62 +1,55 @@
 import { initDB } from './init';
-import { Exercise, SQLiteResult } from './types';
+import { Exercise } from './types';
 
 export const addExercise = async (name: string): Promise<number | undefined> => {
   const db = await initDB();
-  const result: SQLiteResult = await new Promise((resolve, reject) => {
-    db.transaction((tx: any) => {
-      tx.executeSql(
-        'INSERT INTO exercises (name) VALUES (?);',
-        [name],
-        (_: any, { insertId, rowsAffected, rows }: any) => resolve({ insertId, rowsAffected, rows }),
-        (_: any, error: any) => reject(error)
-      );
-    });
-  });
-  return result.insertId;
+  try {
+    const result = await db.runAsync(
+      'INSERT INTO exercises (name) VALUES (?);',
+      [name]
+    );
+    return result.lastInsertRowId as number;
+  } catch (error) {
+    console.error('Error adding exercise:', error);
+    throw error;
+  }
 };
 
 export const getExercises = async (): Promise<Exercise[]> => {
   const db = await initDB();
-  const result = await new Promise<Exercise[]>((resolve, reject) => {
-    db.transaction((tx: any) => {
-      tx.executeSql(
-        'SELECT * FROM exercises;',
-        [],
-        (_: any, { rows }: any) => resolve(rows._array as Exercise[]),
-        (_: any, error: any) => reject(error)
-      );
-    });
-  });
-  return result;
+  try {
+    const results = await db.getAllAsync<Exercise>('SELECT * FROM exercises;');
+    return results;
+  } catch (error) {
+    console.error('Error getting exercises:', error);
+    throw error;
+  }
 };
 
 export const updateExercise = async (id: number, name: string): Promise<boolean> => {
   const db = await initDB();
-  const result = await new Promise<{ rowsAffected: number }>((resolve, reject) => {
-    db.transaction((tx: any) => {
-      tx.executeSql(
-        'UPDATE exercises SET name = ? WHERE id = ?;',
-        [name, id],
-        (_: any, { rowsAffected }: any) => resolve({ rowsAffected }),
-        (_: any, error: any) => reject(error)
-      );
-    });
-  });
-  return result.rowsAffected > 0;
+  try {
+    const result = await db.runAsync(
+      'UPDATE exercises SET name = ? WHERE id = ?;',
+      [name, id]
+    );
+    return result.changes > 0;
+  } catch (error) {
+    console.error('Error updating exercise:', error);
+    throw error;
+  }
 };
 
 export const deleteExercise = async (id: number): Promise<boolean> => {
   const db = await initDB();
-  const result = await new Promise<{ rowsAffected: number }>((resolve, reject) => {
-    db.transaction((tx: any) => {
-      tx.executeSql(
-        'DELETE FROM exercises WHERE id = ?;',
-        [id],
-        (_: any, { rowsAffected }: any) => resolve({ rowsAffected }),
-        (_: any, error: any) => reject(error)
-      );
-    });
-  });
-  return result.rowsAffected > 0;
+  try {
+    const result = await db.runAsync(
+      'DELETE FROM exercises WHERE id = ?;',
+      [id]
+    );
+    return result.changes > 0;
+  } catch (error) {
+    console.error('Error deleting exercise:', error);
+    throw error;
+  }
 };

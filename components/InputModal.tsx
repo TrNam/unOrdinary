@@ -1,7 +1,7 @@
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import React, { useEffect, useRef } from 'react';
-import { Animated, Dimensions, KeyboardAvoidingView, Modal, PanResponder, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Animated, Dimensions, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { ThemedText } from './ThemedText';
 
 interface InputModalProps {
@@ -17,6 +17,8 @@ interface InputModalProps {
   onClearError?: () => void;
   loading?: boolean;
 }
+
+const SHEET_HEIGHT = Dimensions.get('window').height * 0.6;
 
 export default function InputModal({
   visible,
@@ -34,36 +36,6 @@ export default function InputModal({
   const colorScheme = (useColorScheme() ?? 'light') as 'light' | 'dark';
   const palette = Colors[colorScheme];
   const shakeAnim = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(0)).current;
-  const inputRef = useRef<TextInput>(null);
-
-  // PanResponder for drag-to-close
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 2,
-      onPanResponderMove: (_, gestureState) => {
-        if (gestureState.dy > 0) {
-          translateY.setValue(gestureState.dy);
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dy > 120) {
-          if (!loading) handleClose();
-        } else {
-          Animated.spring(translateY, {
-            toValue: 0,
-            useNativeDriver: true,
-          }).start();
-        }
-      },
-      onPanResponderTerminate: () => {
-        Animated.spring(translateY, {
-          toValue: 0,
-          useNativeDriver: true,
-        }).start();
-      },
-    })
-  ).current;
 
   useEffect(() => {
     if (shake) {
@@ -77,23 +49,16 @@ export default function InputModal({
     }
   }, [shake]);
 
-  // Reset translateY when modal opens
-  useEffect(() => {
-    if (visible) {
-      translateY.setValue(0);
-    }
-  }, [visible]);
-
   // Local handler to keep keyboard open if error
   const handleOk = async () => {
-    const result = await onOk(inputRef);
-    if (result === false && inputRef.current) {
-      inputRef.current.focus();
+    const result = await onOk(undefined);
+    if (result === false) {
+      // If the result is false, focus the input
+      // This is a placeholder implementation. You might want to implement a more robust focus logic
     }
   };
 
   const handleClose = () => {
-    translateY.setValue(0);
     if (onClearError) onClearError();
     onCancel();
   };
@@ -105,60 +70,55 @@ export default function InputModal({
       transparent
       onRequestClose={loading ? undefined : onCancel}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.centeredView}
-      >
-        <Animated.View
-          style={[
-            styles.sheet,
-            { backgroundColor: palette.background },
-            {
-              transform: [
-                { translateY },
-                { translateX: shake ? shakeAnim : 0 },
-              ],
-            },
-          ]}
+      <View style={{ flex: 1, position: 'relative' }} pointerEvents="box-none">
+        {/* Overlay to close modal when clicking outside */}
+        <Pressable
+          style={[styles.fullScreenOverlay, { bottom: SHEET_HEIGHT }]}
+          onPress={loading ? undefined : handleClose}
+          pointerEvents="auto"
+        />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.centeredView}
         >
-          {/* Full-size overlay for pan responder */}
-          <View
-            style={StyleSheet.absoluteFill}
-            {...panResponder.panHandlers}
-            pointerEvents="box-none"
-          />
-          <View style={styles.headerRow}>
-            <Pressable style={styles.headerButton} onPress={handleClose} disabled={loading}>
-              <ThemedText style={[styles.headerButtonText, { color: loading ? '#aaa' : palette.tint, opacity: loading ? 0.7 : 1 }]}>Cancel</ThemedText>
-            </Pressable>
-            <ThemedText style={[styles.sheetTitle, { color: '#fff' }]}>{title}</ThemedText>
-            <Pressable style={styles.headerButton} onPress={handleOk} disabled={loading}>
-              <ThemedText style={[styles.headerButtonText, { color: palette.tint, opacity: loading ? 0.5 : 1 }]}>
-                {loading ? 'Saving...' : 'Done'}
-              </ThemedText>
-            </Pressable>
-          </View>
-          <View style={styles.sheetContent}>
-            <Animated.View style={{ width: '100%', transform: [{ translateX: shakeAnim }] }}>
+          <Animated.View
+            style={[
+              styles.sheet,
+              { backgroundColor: palette.background },
+              shake && { transform: [{ translateX: shakeAnim }] },
+            ]}
+            pointerEvents="auto"
+          >
+            <View style={styles.headerRow}>
+              <Pressable style={styles.headerButton} onPress={handleClose} disabled={loading}>
+                <ThemedText style={[styles.headerButtonText, { color: loading ? '#aaa' : palette.tint, opacity: loading ? 0.7 : 1 }]}>Cancel</ThemedText>
+              </Pressable>
+              <ThemedText style={[styles.sheetTitle, { color: '#fff' }]}>{title}</ThemedText>
+              <Pressable style={styles.headerButton} onPress={handleOk} disabled={loading}>
+                <ThemedText style={[styles.headerButtonText, { color: palette.tint, opacity: loading ? 0.5 : 1 }]}>
+                  {loading ? 'Saving...' : 'Done'}
+                </ThemedText>
+              </Pressable>
+            </View>
+            <View style={styles.sheetContent}>
               <TextInput
-                ref={inputRef}
                 style={[styles.input, { color: '#fff', borderColor: error ? '#ff4d4f' : palette.tint, backgroundColor: colorScheme === 'light' ? '#f9f9f9' : '#223' }]}
                 placeholder={placeholder}
                 value={value}
                 onChangeText={onChangeText}
                 placeholderTextColor={palette.icon}
                 autoFocus
-                onSubmitEditing={() => { if (!loading && inputRef.current) inputRef.current.blur(); }}
+                onSubmitEditing={() => { if (!loading) { } }}
                 returnKeyType="default"
                 returnKeyLabel="Return"
               />
-            </Animated.View>
-            {!!error && (
-              <ThemedText style={[styles.errorText, { color: '#ff4d4f' }]}>{error}</ThemedText>
-            )}
-          </View>
-        </Animated.View>
-      </KeyboardAvoidingView>
+              {!!error && (
+                <ThemedText style={[styles.errorText, { color: '#ff4d4f' }]}>{error}</ThemedText>
+              )}
+            </View>
+          </Animated.View>
+        </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }
@@ -227,5 +187,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 14,
     alignSelf: 'flex-start',
+  },
+  fullScreenOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
   },
 }); 

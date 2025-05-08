@@ -1,0 +1,827 @@
+diff --git a/node_modules/typeorm/browser/driver/DriverFactory.js b/node_modules/typeorm/browser/driver/DriverFactory.js
+index fa19d4e..d33cb69 100644
+--- a/node_modules/typeorm/browser/driver/DriverFactory.js
++++ b/node_modules/typeorm/browser/driver/DriverFactory.js
+@@ -10,7 +10,7 @@ import { NativescriptDriver } from "./nativescript/NativescriptDriver";
+ import { SqljsDriver } from "./sqljs/SqljsDriver";
+ import { MysqlDriver } from "./mysql/MysqlDriver";
+ import { PostgresDriver } from "./postgres/PostgresDriver";
+-import { ExpoDriver } from "./expo/ExpoDriver";
++import { ExpoDriverFactory } from "./expo/ExpoDriverFactory";
+ import { AuroraMysqlDriver } from "./aurora-mysql/AuroraMysqlDriver";
+ import { AuroraPostgresDriver } from "./aurora-postgres/AuroraPostgresDriver";
+ import { SapDriver } from "./sap/SapDriver";
+@@ -56,7 +56,7 @@ export class DriverFactory {
+             case "mongodb":
+                 return new MongoDriver(connection);
+             case "expo":
+-                return new ExpoDriver(connection);
++                return new ExpoDriverFactory(connection).create();
+             case "aurora-mysql":
+                 return new AuroraMysqlDriver(connection);
+             case "aurora-postgres":
+diff --git a/node_modules/typeorm/browser/driver/DriverFactory.js.map b/node_modules/typeorm/browser/driver/DriverFactory.js.map
+index 0641871..f1d4db6 100644
+--- a/node_modules/typeorm/browser/driver/DriverFactory.js.map
++++ b/node_modules/typeorm/browser/driver/DriverFactory.js.map
+@@ -1 +1 @@
+-{"version":3,"sources":["../browser/src/driver/DriverFactory.ts"],"names":[],"mappings":"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","file":"DriverFactory.js","sourcesContent":["import { MissingDriverError } from \"../error/MissingDriverError\"\nimport { CockroachDriver } from \"./cockroachdb/CockroachDriver\"\nimport { MongoDriver } from \"./mongodb/MongoDriver\"\nimport { SqlServerDriver } from \"./sqlserver/SqlServerDriver\"\nimport { OracleDriver } from \"./oracle/OracleDriver\"\nimport { SqliteDriver } from \"./sqlite/SqliteDriver\"\nimport { CordovaDriver } from \"./cordova/CordovaDriver\"\nimport { ReactNativeDriver } from \"./react-native/ReactNativeDriver\"\nimport { NativescriptDriver } from \"./nativescript/NativescriptDriver\"\nimport { SqljsDriver } from \"./sqljs/SqljsDriver\"\nimport { MysqlDriver } from \"./mysql/MysqlDriver\"\nimport { PostgresDriver } from \"./postgres/PostgresDriver\"\nimport { ExpoDriver } from \"./expo/ExpoDriver\"\nimport { AuroraMysqlDriver } from \"./aurora-mysql/AuroraMysqlDriver\"\nimport { AuroraPostgresDriver } from \"./aurora-postgres/AuroraPostgresDriver\"\nimport { Driver } from \"./Driver\"\nimport { DataSource } from \"../data-source/DataSource\"\nimport { SapDriver } from \"./sap/SapDriver\"\nimport { BetterSqlite3Driver } from \"./better-sqlite3/BetterSqlite3Driver\"\nimport { CapacitorDriver } from \"./capacitor/CapacitorDriver\"\nimport { SpannerDriver } from \"./spanner/SpannerDriver\"\n\n/**\n * Helps to create drivers.\n */\nexport class DriverFactory {\n    /**\n     * Creates a new driver depend on a given connection's driver type.\n     */\n    create(connection: DataSource): Driver {\n        const { type } = connection.options\n        switch (type) {\n            case \"mysql\":\n                return new MysqlDriver(connection)\n            case \"postgres\":\n                return new PostgresDriver(connection)\n            case \"cockroachdb\":\n                return new CockroachDriver(connection)\n            case \"sap\":\n                return new SapDriver(connection)\n            case \"mariadb\":\n                return new MysqlDriver(connection)\n            case \"sqlite\":\n                return new SqliteDriver(connection)\n            case \"better-sqlite3\":\n                return new BetterSqlite3Driver(connection)\n            case \"cordova\":\n                return new CordovaDriver(connection)\n            case \"nativescript\":\n                return new NativescriptDriver(connection)\n            case \"react-native\":\n                return new ReactNativeDriver(connection)\n            case \"sqljs\":\n                return new SqljsDriver(connection)\n            case \"oracle\":\n                return new OracleDriver(connection)\n            case \"mssql\":\n                return new SqlServerDriver(connection)\n            case \"mongodb\":\n                return new MongoDriver(connection)\n            case \"expo\":\n                return new ExpoDriver(connection)\n            case \"aurora-mysql\":\n                return new AuroraMysqlDriver(connection)\n            case \"aurora-postgres\":\n                return new AuroraPostgresDriver(connection)\n            case \"capacitor\":\n                return new CapacitorDriver(connection)\n            case \"spanner\":\n                return new SpannerDriver(connection)\n            default:\n                throw new MissingDriverError(type, [\n                    \"aurora-mysql\",\n                    \"aurora-postgres\",\n                    \"better-sqlite3\",\n                    \"capacitor\",\n                    \"cockroachdb\",\n                    \"cordova\",\n                    \"expo\",\n                    \"mariadb\",\n                    \"mongodb\",\n                    \"mssql\",\n                    \"mysql\",\n                    \"nativescript\",\n                    \"oracle\",\n                    \"postgres\",\n                    \"react-native\",\n                    \"sap\",\n                    \"sqlite\",\n                    \"sqljs\",\n                    \"spanner\",\n                ])\n        }\n    }\n}\n"],"sourceRoot":".."}
+\ No newline at end of file
++{"version":3,"sources":["../browser/src/driver/DriverFactory.ts"],"names":[],"mappings":"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","file":"DriverFactory.js","sourcesContent":["import { MissingDriverError } from \"../error/MissingDriverError\"\nimport { CockroachDriver } from \"./cockroachdb/CockroachDriver\"\nimport { MongoDriver } from \"./mongodb/MongoDriver\"\nimport { SqlServerDriver } from \"./sqlserver/SqlServerDriver\"\nimport { OracleDriver } from \"./oracle/OracleDriver\"\nimport { SqliteDriver } from \"./sqlite/SqliteDriver\"\nimport { CordovaDriver } from \"./cordova/CordovaDriver\"\nimport { ReactNativeDriver } from \"./react-native/ReactNativeDriver\"\nimport { NativescriptDriver } from \"./nativescript/NativescriptDriver\"\nimport { SqljsDriver } from \"./sqljs/SqljsDriver\"\nimport { MysqlDriver } from \"./mysql/MysqlDriver\"\nimport { PostgresDriver } from \"./postgres/PostgresDriver\"\nimport { ExpoDriverFactory } from \"./expo/ExpoDriverFactory\"\nimport { AuroraMysqlDriver } from \"./aurora-mysql/AuroraMysqlDriver\"\nimport { AuroraPostgresDriver } from \"./aurora-postgres/AuroraPostgresDriver\"\nimport { Driver } from \"./Driver\"\nimport { DataSource } from \"../data-source/DataSource\"\nimport { SapDriver } from \"./sap/SapDriver\"\nimport { BetterSqlite3Driver } from \"./better-sqlite3/BetterSqlite3Driver\"\nimport { CapacitorDriver } from \"./capacitor/CapacitorDriver\"\nimport { SpannerDriver } from \"./spanner/SpannerDriver\"\n\n/**\n * Helps to create drivers.\n */\nexport class DriverFactory {\n    /**\n     * Creates a new driver depend on a given connection's driver type.\n     */\n    create(connection: DataSource): Driver {\n        const { type } = connection.options\n        switch (type) {\n            case \"mysql\":\n                return new MysqlDriver(connection)\n            case \"postgres\":\n                return new PostgresDriver(connection)\n            case \"cockroachdb\":\n                return new CockroachDriver(connection)\n            case \"sap\":\n                return new SapDriver(connection)\n            case \"mariadb\":\n                return new MysqlDriver(connection)\n            case \"sqlite\":\n                return new SqliteDriver(connection)\n            case \"better-sqlite3\":\n                return new BetterSqlite3Driver(connection)\n            case \"cordova\":\n                return new CordovaDriver(connection)\n            case \"nativescript\":\n                return new NativescriptDriver(connection)\n            case \"react-native\":\n                return new ReactNativeDriver(connection)\n            case \"sqljs\":\n                return new SqljsDriver(connection)\n            case \"oracle\":\n                return new OracleDriver(connection)\n            case \"mssql\":\n                return new SqlServerDriver(connection)\n            case \"mongodb\":\n                return new MongoDriver(connection)\n            case \"expo\":\n                return new ExpoDriverFactory(connection).create()\n            case \"aurora-mysql\":\n                return new AuroraMysqlDriver(connection)\n            case \"aurora-postgres\":\n                return new AuroraPostgresDriver(connection)\n            case \"capacitor\":\n                return new CapacitorDriver(connection)\n            case \"spanner\":\n                return new SpannerDriver(connection)\n            default:\n                throw new MissingDriverError(type, [\n                    \"aurora-mysql\",\n                    \"aurora-postgres\",\n                    \"better-sqlite3\",\n                    \"capacitor\",\n                    \"cockroachdb\",\n                    \"cordova\",\n                    \"expo\",\n                    \"mariadb\",\n                    \"mongodb\",\n                    \"mssql\",\n                    \"mysql\",\n                    \"nativescript\",\n                    \"oracle\",\n                    \"postgres\",\n                    \"react-native\",\n                    \"sap\",\n                    \"sqlite\",\n                    \"sqljs\",\n                    \"spanner\",\n                ])\n        }\n    }\n}\n"],"sourceRoot":".."}
+\ No newline at end of file
+diff --git a/node_modules/typeorm/browser/driver/expo/ExpoDriver.d.ts b/node_modules/typeorm/browser/driver/expo/ExpoDriver.d.ts
+index 04f704c..a1e4602 100644
+--- a/node_modules/typeorm/browser/driver/expo/ExpoDriver.d.ts
++++ b/node_modules/typeorm/browser/driver/expo/ExpoDriver.d.ts
+@@ -2,20 +2,10 @@ import { AbstractSqliteDriver } from "../sqlite-abstract/AbstractSqliteDriver";
+ import { ExpoConnectionOptions } from "./ExpoConnectionOptions";
+ import { QueryRunner } from "../../query-runner/QueryRunner";
+ import { DataSource } from "../../data-source/DataSource";
+-import { ReplicationMode } from "../types/ReplicationMode";
+ export declare class ExpoDriver extends AbstractSqliteDriver {
+     options: ExpoConnectionOptions;
+     constructor(connection: DataSource);
+-    /**
+-     * Closes connection with database.
+-     */
+     disconnect(): Promise<void>;
+-    /**
+-     * Creates a query runner used to execute database queries.
+-     */
+-    createQueryRunner(mode: ReplicationMode): QueryRunner;
+-    /**
+-     * Creates connection with the database.
+-     */
+-    protected createDatabaseConnection(): Promise<void>;
++    createQueryRunner(): QueryRunner;
++    protected createDatabaseConnection(): Promise<any>;
+ }
+diff --git a/node_modules/typeorm/browser/driver/expo/ExpoDriver.js b/node_modules/typeorm/browser/driver/expo/ExpoDriver.js
+index 41767da..3e9d5d9 100644
+--- a/node_modules/typeorm/browser/driver/expo/ExpoDriver.js
++++ b/node_modules/typeorm/browser/driver/expo/ExpoDriver.js
+@@ -1,70 +1,24 @@
+ import { AbstractSqliteDriver } from "../sqlite-abstract/AbstractSqliteDriver";
+ import { ExpoQueryRunner } from "./ExpoQueryRunner";
+ export class ExpoDriver extends AbstractSqliteDriver {
+-    // -------------------------------------------------------------------------
+-    // Constructor
+-    // -------------------------------------------------------------------------
+     constructor(connection) {
+         super(connection);
+-        this.database = this.options.database;
+-        // load sqlite package
+         this.sqlite = this.options.driver;
+     }
+-    // -------------------------------------------------------------------------
+-    // Public Methods
+-    // -------------------------------------------------------------------------
+-    /**
+-     * Closes connection with database.
+-     */
+     async disconnect() {
+-        return new Promise((ok, fail) => {
+-            try {
+-                this.queryRunner = undefined;
+-                this.databaseConnection._db.close();
+-                this.databaseConnection = undefined;
+-                ok();
+-            }
+-            catch (error) {
+-                fail(error);
+-            }
+-        });
++        this.queryRunner = undefined;
++        await this.databaseConnection.closeAsync();
++        this.databaseConnection = undefined;
+     }
+-    /**
+-     * Creates a query runner used to execute database queries.
+-     */
+-    createQueryRunner(mode) {
++    createQueryRunner() {
+         if (!this.queryRunner)
+             this.queryRunner = new ExpoQueryRunner(this);
+         return this.queryRunner;
+     }
+-    // -------------------------------------------------------------------------
+-    // Protected Methods
+-    // -------------------------------------------------------------------------
+-    /**
+-     * Creates connection with the database.
+-     */
+-    createDatabaseConnection() {
+-        return new Promise((ok, fail) => {
+-            try {
+-                const databaseConnection = this.sqlite.openDatabase(this.options.database);
+-                /*
+-                // we need to enable foreign keys in sqlite to make sure all foreign key related features
+-                // working properly. this also makes onDelete work with sqlite.
+-                */
+-                databaseConnection.transaction((tsx) => {
+-                    tsx.executeSql(`PRAGMA foreign_keys = ON`, [], (t, result) => {
+-                        ok(databaseConnection);
+-                    }, (t, err) => {
+-                        fail({ transaction: t, error: err });
+-                    });
+-                }, (err) => {
+-                    fail(err);
+-                });
+-            }
+-            catch (error) {
+-                fail(error);
+-            }
+-        });
++    async createDatabaseConnection() {
++        this.databaseConnection = await this.sqlite.openDatabaseAsync(this.options.database);
++        await this.databaseConnection.runAsync("PRAGMA foreign_keys = ON");
++        return this.databaseConnection;
+     }
+ }
+ 
+diff --git a/node_modules/typeorm/browser/driver/expo/ExpoDriver.js.map b/node_modules/typeorm/browser/driver/expo/ExpoDriver.js.map
+index 33c3cb1..ccd50cd 100644
+--- a/node_modules/typeorm/browser/driver/expo/ExpoDriver.js.map
++++ b/node_modules/typeorm/browser/driver/expo/ExpoDriver.js.map
+@@ -1 +1 @@
+-{"version":3,"sources":["../browser/src/driver/expo/ExpoDriver.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,oBAAoB,EAAE,MAAM,yCAAyC,CAAA;AAE9E,OAAO,EAAE,eAAe,EAAE,MAAM,mBAAmB,CAAA;AAKnD,MAAM,OAAO,UAAW,SAAQ,oBAAoB;IAGhD,4EAA4E;IAC5E,cAAc;IACd,4EAA4E;IAE5E,YAAY,UAAsB;QAC9B,KAAK,CAAC,UAAU,CAAC,CAAA;QAEjB,IAAI,CAAC,QAAQ,GAAG,IAAI,CAAC,OAAO,CAAC,QAAQ,CAAA;QAErC,sBAAsB;QACtB,IAAI,CAAC,MAAM,GAAG,IAAI,CAAC,OAAO,CAAC,MAAM,CAAA;IACrC,CAAC;IAED,4EAA4E;IAC5E,iBAAiB;IACjB,4EAA4E;IAE5E;;OAEG;IACH,KAAK,CAAC,UAAU;QACZ,OAAO,IAAI,OAAO,CAAO,CAAC,EAAE,EAAE,IAAI,EAAE,EAAE;YAClC,IAAI,CAAC;gBACD,IAAI,CAAC,WAAW,GAAG,SAAS,CAAA;gBAC5B,IAAI,CAAC,kBAAkB,CAAC,GAAG,CAAC,KAAK,EAAE,CAAA;gBACnC,IAAI,CAAC,kBAAkB,GAAG,SAAS,CAAA;gBACnC,EAAE,EAAE,CAAA;YACR,CAAC;YAAC,OAAO,KAAK,EAAE,CAAC;gBACb,IAAI,CAAC,KAAK,CAAC,CAAA;YACf,CAAC;QACL,CAAC,CAAC,CAAA;IACN,CAAC;IAED;;OAEG;IACH,iBAAiB,CAAC,IAAqB;QACnC,IAAI,CAAC,IAAI,CAAC,WAAW;YAAE,IAAI,CAAC,WAAW,GAAG,IAAI,eAAe,CAAC,IAAI,CAAC,CAAA;QAEnE,OAAO,IAAI,CAAC,WAAW,CAAA;IAC3B,CAAC;IAED,4EAA4E;IAC5E,oBAAoB;IACpB,4EAA4E;IAE5E;;OAEG;IACO,wBAAwB;QAC9B,OAAO,IAAI,OAAO,CAAO,CAAC,EAAE,EAAE,IAAI,EAAE,EAAE;YAClC,IAAI,CAAC;gBACD,MAAM,kBAAkB,GAAG,IAAI,CAAC,MAAM,CAAC,YAAY,CAC/C,IAAI,CAAC,OAAO,CAAC,QAAQ,CACxB,CAAA;gBACD;;;kBAGE;gBACF,kBAAkB,CAAC,WAAW,CAC1B,CAAC,GAAQ,EAAE,EAAE;oBACT,GAAG,CAAC,UAAU,CACV,0BAA0B,EAC1B,EAAE,EACF,CAAC,CAAM,EAAE,MAAW,EAAE,EAAE;wBACpB,EAAE,CAAC,kBAAkB,CAAC,CAAA;oBAC1B,CAAC,EACD,CAAC,CAAM,EAAE,GAAQ,EAAE,EAAE;wBACjB,IAAI,CAAC,EAAE,WAAW,EAAE,CAAC,EAAE,KAAK,EAAE,GAAG,EAAE,CAAC,CAAA;oBACxC,CAAC,CACJ,CAAA;gBACL,CAAC,EACD,CAAC,GAAQ,EAAE,EAAE;oBACT,IAAI,CAAC,GAAG,CAAC,CAAA;gBACb,CAAC,CACJ,CAAA;YACL,CAAC;YAAC,OAAO,KAAK,EAAE,CAAC;gBACb,IAAI,CAAC,KAAK,CAAC,CAAA;YACf,CAAC;QACL,CAAC,CAAC,CAAA;IACN,CAAC;CACJ","file":"ExpoDriver.js","sourcesContent":["import { AbstractSqliteDriver } from \"../sqlite-abstract/AbstractSqliteDriver\"\nimport { ExpoConnectionOptions } from \"./ExpoConnectionOptions\"\nimport { ExpoQueryRunner } from \"./ExpoQueryRunner\"\nimport { QueryRunner } from \"../../query-runner/QueryRunner\"\nimport { DataSource } from \"../../data-source/DataSource\"\nimport { ReplicationMode } from \"../types/ReplicationMode\"\n\nexport class ExpoDriver extends AbstractSqliteDriver {\n    options: ExpoConnectionOptions\n\n    // -------------------------------------------------------------------------\n    // Constructor\n    // -------------------------------------------------------------------------\n\n    constructor(connection: DataSource) {\n        super(connection)\n\n        this.database = this.options.database\n\n        // load sqlite package\n        this.sqlite = this.options.driver\n    }\n\n    // -------------------------------------------------------------------------\n    // Public Methods\n    // -------------------------------------------------------------------------\n\n    /**\n     * Closes connection with database.\n     */\n    async disconnect(): Promise<void> {\n        return new Promise<void>((ok, fail) => {\n            try {\n                this.queryRunner = undefined\n                this.databaseConnection._db.close()\n                this.databaseConnection = undefined\n                ok()\n            } catch (error) {\n                fail(error)\n            }\n        })\n    }\n\n    /**\n     * Creates a query runner used to execute database queries.\n     */\n    createQueryRunner(mode: ReplicationMode): QueryRunner {\n        if (!this.queryRunner) this.queryRunner = new ExpoQueryRunner(this)\n\n        return this.queryRunner\n    }\n\n    // -------------------------------------------------------------------------\n    // Protected Methods\n    // -------------------------------------------------------------------------\n\n    /**\n     * Creates connection with the database.\n     */\n    protected createDatabaseConnection() {\n        return new Promise<void>((ok, fail) => {\n            try {\n                const databaseConnection = this.sqlite.openDatabase(\n                    this.options.database,\n                )\n                /*\n                // we need to enable foreign keys in sqlite to make sure all foreign key related features\n                // working properly. this also makes onDelete work with sqlite.\n                */\n                databaseConnection.transaction(\n                    (tsx: any) => {\n                        tsx.executeSql(\n                            `PRAGMA foreign_keys = ON`,\n                            [],\n                            (t: any, result: any) => {\n                                ok(databaseConnection)\n                            },\n                            (t: any, err: any) => {\n                                fail({ transaction: t, error: err })\n                            },\n                        )\n                    },\n                    (err: any) => {\n                        fail(err)\n                    },\n                )\n            } catch (error) {\n                fail(error)\n            }\n        })\n    }\n}\n"],"sourceRoot":"../.."}
+\ No newline at end of file
++{"version":3,"sources":["../browser/src/driver/expo/ExpoDriver.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,oBAAoB,EAAE,MAAM,yCAAyC,CAAA;AAE9E,OAAO,EAAE,eAAe,EAAE,MAAM,mBAAmB,CAAA;AAInD,MAAM,OAAO,UAAW,SAAQ,oBAAoB;IAGhD,YAAY,UAAsB;QAC9B,KAAK,CAAC,UAAU,CAAC,CAAA;QACjB,IAAI,CAAC,MAAM,GAAG,IAAI,CAAC,OAAO,CAAC,MAAM,CAAA;IACrC,CAAC;IAED,KAAK,CAAC,UAAU;QACZ,IAAI,CAAC,WAAW,GAAG,SAAS,CAAA;QAC5B,MAAM,IAAI,CAAC,kBAAkB,CAAC,UAAU,EAAE,CAAA;QAC1C,IAAI,CAAC,kBAAkB,GAAG,SAAS,CAAA;IACvC,CAAC;IAED,iBAAiB;QACb,IAAI,CAAC,IAAI,CAAC,WAAW;YAAE,IAAI,CAAC,WAAW,GAAG,IAAI,eAAe,CAAC,IAAI,CAAC,CAAA;QAEnE,OAAO,IAAI,CAAC,WAAW,CAAA;IAC3B,CAAC;IAES,KAAK,CAAC,wBAAwB;QACpC,IAAI,CAAC,kBAAkB,GAAG,MAAM,IAAI,CAAC,MAAM,CAAC,iBAAiB,CACzD,IAAI,CAAC,OAAO,CAAC,QAAQ,CACxB,CAAA;QACD,MAAM,IAAI,CAAC,kBAAkB,CAAC,QAAQ,CAAC,0BAA0B,CAAC,CAAA;QAClE,OAAO,IAAI,CAAC,kBAAkB,CAAA;IAClC,CAAC;CACJ","file":"ExpoDriver.js","sourcesContent":["import { AbstractSqliteDriver } from \"../sqlite-abstract/AbstractSqliteDriver\"\nimport { ExpoConnectionOptions } from \"./ExpoConnectionOptions\"\nimport { ExpoQueryRunner } from \"./ExpoQueryRunner\"\nimport { QueryRunner } from \"../../query-runner/QueryRunner\"\nimport { DataSource } from \"../../data-source/DataSource\"\n\nexport class ExpoDriver extends AbstractSqliteDriver {\n    options: ExpoConnectionOptions\n\n    constructor(connection: DataSource) {\n        super(connection)\n        this.sqlite = this.options.driver\n    }\n\n    async disconnect(): Promise<void> {\n        this.queryRunner = undefined\n        await this.databaseConnection.closeAsync()\n        this.databaseConnection = undefined\n    }\n\n    createQueryRunner(): QueryRunner {\n        if (!this.queryRunner) this.queryRunner = new ExpoQueryRunner(this)\n\n        return this.queryRunner\n    }\n\n    protected async createDatabaseConnection() {\n        this.databaseConnection = await this.sqlite.openDatabaseAsync(\n            this.options.database,\n        )\n        await this.databaseConnection.runAsync(\"PRAGMA foreign_keys = ON\")\n        return this.databaseConnection\n    }\n}\n"],"sourceRoot":"../.."}
+\ No newline at end of file
+diff --git a/node_modules/typeorm/browser/driver/expo/ExpoDriverFactory.d.ts b/node_modules/typeorm/browser/driver/expo/ExpoDriverFactory.d.ts
+new file mode 100644
+index 0000000..2b8fec2
+--- /dev/null
++++ b/node_modules/typeorm/browser/driver/expo/ExpoDriverFactory.d.ts
+@@ -0,0 +1,9 @@
++import { DataSource } from "../../data-source";
++import { ExpoDriver } from "./ExpoDriver";
++import { ExpoLegacyDriver } from "./legacy/ExpoLegacyDriver";
++export declare class ExpoDriverFactory {
++    connection: DataSource;
++    constructor(connection: DataSource);
++    create(): ExpoDriver | ExpoLegacyDriver;
++    private get isLegacyDriver();
++}
+diff --git a/node_modules/typeorm/browser/driver/expo/ExpoDriverFactory.js b/node_modules/typeorm/browser/driver/expo/ExpoDriverFactory.js
+new file mode 100644
+index 0000000..cdb9830
+--- /dev/null
++++ b/node_modules/typeorm/browser/driver/expo/ExpoDriverFactory.js
+@@ -0,0 +1,18 @@
++import { ExpoDriver } from "./ExpoDriver";
++import { ExpoLegacyDriver } from "./legacy/ExpoLegacyDriver";
++export class ExpoDriverFactory {
++    constructor(connection) {
++        this.connection = connection;
++    }
++    create() {
++        if (this.isLegacyDriver) {
++            return new ExpoLegacyDriver(this.connection);
++        }
++        return new ExpoDriver(this.connection);
++    }
++    get isLegacyDriver() {
++        return !("openDatabaseAsync" in this.connection.options.driver);
++    }
++}
++
++//# sourceMappingURL=ExpoDriverFactory.js.map
+diff --git a/node_modules/typeorm/browser/driver/expo/ExpoDriverFactory.js.map b/node_modules/typeorm/browser/driver/expo/ExpoDriverFactory.js.map
+new file mode 100644
+index 0000000..77dd8f8
+--- /dev/null
++++ b/node_modules/typeorm/browser/driver/expo/ExpoDriverFactory.js.map
+@@ -0,0 +1 @@
++{"version":3,"sources":["../browser/src/driver/expo/ExpoDriverFactory.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,UAAU,EAAE,MAAM,cAAc,CAAA;AACzC,OAAO,EAAE,gBAAgB,EAAE,MAAM,2BAA2B,CAAA;AAE5D,MAAM,OAAO,iBAAiB;IAG1B,YAAY,UAAsB;QAC9B,IAAI,CAAC,UAAU,GAAG,UAAU,CAAA;IAChC,CAAC;IAED,MAAM;QACF,IAAI,IAAI,CAAC,cAAc,EAAE,CAAC;YACtB,OAAO,IAAI,gBAAgB,CAAC,IAAI,CAAC,UAAU,CAAC,CAAA;QAChD,CAAC;QAED,OAAO,IAAI,UAAU,CAAC,IAAI,CAAC,UAAU,CAAC,CAAA;IAC1C,CAAC;IAED,IAAY,cAAc;QACtB,OAAO,CAAC,CAAC,mBAAmB,IAAI,IAAI,CAAC,UAAU,CAAC,OAAO,CAAC,MAAM,CAAC,CAAA;IACnE,CAAC;CACJ","file":"ExpoDriverFactory.js","sourcesContent":["import { DataSource } from \"../../data-source\"\nimport { ExpoDriver } from \"./ExpoDriver\"\nimport { ExpoLegacyDriver } from \"./legacy/ExpoLegacyDriver\"\n\nexport class ExpoDriverFactory {\n    connection: DataSource\n\n    constructor(connection: DataSource) {\n        this.connection = connection\n    }\n\n    create(): ExpoDriver | ExpoLegacyDriver {\n        if (this.isLegacyDriver) {\n            return new ExpoLegacyDriver(this.connection)\n        }\n\n        return new ExpoDriver(this.connection)\n    }\n\n    private get isLegacyDriver(): boolean {\n        return !(\"openDatabaseAsync\" in this.connection.options.driver)\n    }\n}\n"],"sourceRoot":"../.."}
+\ No newline at end of file
+diff --git a/node_modules/typeorm/browser/driver/expo/ExpoQueryRunner.d.ts b/node_modules/typeorm/browser/driver/expo/ExpoQueryRunner.d.ts
+index 9d9b9c8..6a630fa 100644
+--- a/node_modules/typeorm/browser/driver/expo/ExpoQueryRunner.d.ts
++++ b/node_modules/typeorm/browser/driver/expo/ExpoQueryRunner.d.ts
+@@ -1,57 +1,9 @@
+ import { AbstractSqliteQueryRunner } from "../sqlite-abstract/AbstractSqliteQueryRunner";
+ import { ExpoDriver } from "./ExpoDriver";
+-/**
+- * Runs queries on a single sqlite database connection.
+- */
+ export declare class ExpoQueryRunner extends AbstractSqliteQueryRunner {
+-    /**
+-     * Database driver used by connection.
+-     */
+     driver: ExpoDriver;
+-    /**
+-     * Database transaction object
+-     */
+-    private transaction?;
+     constructor(driver: ExpoDriver);
+-    /**
+-     * Starts transaction. Within Expo, all database operations happen in a
+-     * transaction context, so issuing a `BEGIN TRANSACTION` command is
+-     * redundant and will result in the following error:
+-     *
+-     * `Error: Error code 1: cannot start a transaction within a transaction`
+-     *
+-     * Instead, we keep track of a `Transaction` object in `this.transaction`
+-     * and continue using the same object until we wish to commit the
+-     * transaction.
+-     */
+-    startTransaction(): Promise<void>;
+-    /**
+-     * Commits transaction.
+-     * Error will be thrown if transaction was not started.
+-     * Since Expo will automatically commit the transaction once all the
+-     * callbacks of the transaction object have been completed, "committing" a
+-     * transaction in this driver's context means that we delete the transaction
+-     * object and set the stage for the next transaction.
+-     */
+-    commitTransaction(): Promise<void>;
+-    /**
+-     * Rollbacks transaction.
+-     * Error will be thrown if transaction was not started.
+-     * This method's functionality is identical to `commitTransaction()` because
+-     * the transaction lifecycle is handled within the Expo transaction object.
+-     * Issuing separate statements for `COMMIT` or `ROLLBACK` aren't necessary.
+-     */
+-    rollbackTransaction(): Promise<void>;
+-    /**
+-     * Called before migrations are run.
+-     */
+     beforeMigration(): Promise<void>;
+-    /**
+-     * Called after migrations are run.
+-     */
+     afterMigration(): Promise<void>;
+-    /**
+-     * Executes a given SQL query.
+-     */
+     query(query: string, parameters?: any[], useStructuredResult?: boolean): Promise<any>;
+ }
+diff --git a/node_modules/typeorm/browser/driver/expo/ExpoQueryRunner.js b/node_modules/typeorm/browser/driver/expo/ExpoQueryRunner.js
+index 9ff2137..5833b0b 100644
+--- a/node_modules/typeorm/browser/driver/expo/ExpoQueryRunner.js
++++ b/node_modules/typeorm/browser/driver/expo/ExpoQueryRunner.js
+@@ -1,164 +1,59 @@
+ import { QueryRunnerAlreadyReleasedError } from "../../error/QueryRunnerAlreadyReleasedError";
+ import { QueryFailedError } from "../../error/QueryFailedError";
+ import { AbstractSqliteQueryRunner } from "../sqlite-abstract/AbstractSqliteQueryRunner";
+-import { TransactionNotStartedError } from "../../error/TransactionNotStartedError";
+ import { Broadcaster } from "../../subscriber/Broadcaster";
+ import { QueryResult } from "../../query-runner/QueryResult";
+ import { BroadcasterResult } from "../../subscriber/BroadcasterResult";
+-/**
+- * Runs queries on a single sqlite database connection.
+- */
+ export class ExpoQueryRunner extends AbstractSqliteQueryRunner {
+-    // -------------------------------------------------------------------------
+-    // Constructor
+-    // -------------------------------------------------------------------------
+     constructor(driver) {
+         super();
+         this.driver = driver;
+         this.connection = driver.connection;
+         this.broadcaster = new Broadcaster(this);
+     }
+-    /**
+-     * Starts transaction. Within Expo, all database operations happen in a
+-     * transaction context, so issuing a `BEGIN TRANSACTION` command is
+-     * redundant and will result in the following error:
+-     *
+-     * `Error: Error code 1: cannot start a transaction within a transaction`
+-     *
+-     * Instead, we keep track of a `Transaction` object in `this.transaction`
+-     * and continue using the same object until we wish to commit the
+-     * transaction.
+-     */
+-    async startTransaction() {
+-        this.isTransactionActive = true;
+-        try {
+-            await this.broadcaster.broadcast("BeforeTransactionStart");
+-        }
+-        catch (err) {
+-            this.isTransactionActive = false;
+-            throw err;
+-        }
+-        this.transactionDepth += 1;
+-        await this.broadcaster.broadcast("AfterTransactionStart");
+-    }
+-    /**
+-     * Commits transaction.
+-     * Error will be thrown if transaction was not started.
+-     * Since Expo will automatically commit the transaction once all the
+-     * callbacks of the transaction object have been completed, "committing" a
+-     * transaction in this driver's context means that we delete the transaction
+-     * object and set the stage for the next transaction.
+-     */
+-    async commitTransaction() {
+-        if (!this.isTransactionActive &&
+-            typeof this.transaction === "undefined")
+-            throw new TransactionNotStartedError();
+-        await this.broadcaster.broadcast("BeforeTransactionCommit");
+-        this.transaction = undefined;
+-        this.isTransactionActive = false;
+-        this.transactionDepth -= 1;
+-        await this.broadcaster.broadcast("AfterTransactionCommit");
+-    }
+-    /**
+-     * Rollbacks transaction.
+-     * Error will be thrown if transaction was not started.
+-     * This method's functionality is identical to `commitTransaction()` because
+-     * the transaction lifecycle is handled within the Expo transaction object.
+-     * Issuing separate statements for `COMMIT` or `ROLLBACK` aren't necessary.
+-     */
+-    async rollbackTransaction() {
+-        if (!this.isTransactionActive &&
+-            typeof this.transaction === "undefined")
+-            throw new TransactionNotStartedError();
+-        await this.broadcaster.broadcast("BeforeTransactionRollback");
+-        this.transaction = undefined;
+-        this.isTransactionActive = false;
+-        this.transactionDepth -= 1;
+-        await this.broadcaster.broadcast("AfterTransactionRollback");
+-    }
+-    /**
+-     * Called before migrations are run.
+-     */
+     async beforeMigration() {
+-        const databaseConnection = await this.connect();
+-        return new Promise((ok, fail) => {
+-            databaseConnection.exec([{ sql: "PRAGMA foreign_keys = OFF", args: [] }], false, (err) => (err ? fail(err) : ok()));
+-        });
++        await this.query("PRAGMA foreign_keys = OFF");
+     }
+-    /**
+-     * Called after migrations are run.
+-     */
+     async afterMigration() {
+-        const databaseConnection = await this.connect();
+-        return new Promise((ok, fail) => {
+-            databaseConnection.exec([{ sql: "PRAGMA foreign_keys = ON", args: [] }], false, (err) => (err ? fail(err) : ok()));
+-        });
++        await this.query("PRAGMA foreign_keys = ON");
+     }
+-    /**
+-     * Executes a given SQL query.
+-     */
+     async query(query, parameters, useStructuredResult = false) {
+         if (this.isReleased)
+             throw new QueryRunnerAlreadyReleasedError();
+-        return new Promise(async (ok, fail) => {
+-            const databaseConnection = await this.connect();
+-            const broadcasterResult = new BroadcasterResult();
+-            this.driver.connection.logger.logQuery(query, parameters, this);
+-            this.broadcaster.broadcastBeforeQueryEvent(broadcasterResult, query, parameters);
+-            const queryStartTime = +new Date();
+-            // All Expo SQL queries are executed in a transaction context
+-            databaseConnection.transaction(async (transaction) => {
+-                if (typeof this.transaction === "undefined") {
+-                    await this.startTransaction();
+-                    this.transaction = transaction;
+-                }
+-                this.transaction.executeSql(query, parameters, async (t, raw) => {
+-                    // log slow queries if maxQueryExecution time is set
+-                    const maxQueryExecutionTime = this.driver.options.maxQueryExecutionTime;
+-                    const queryEndTime = +new Date();
+-                    const queryExecutionTime = queryEndTime - queryStartTime;
+-                    this.broadcaster.broadcastAfterQueryEvent(broadcasterResult, query, parameters, true, queryExecutionTime, raw, undefined);
+-                    await broadcasterResult.wait();
+-                    if (maxQueryExecutionTime &&
+-                        queryExecutionTime > maxQueryExecutionTime) {
+-                        this.driver.connection.logger.logQuerySlow(queryExecutionTime, query, parameters, this);
+-                    }
+-                    const result = new QueryResult();
+-                    if (raw?.hasOwnProperty("rowsAffected")) {
+-                        result.affected = raw.rowsAffected;
+-                    }
+-                    if (raw?.hasOwnProperty("rows")) {
+-                        let resultSet = [];
+-                        for (let i = 0; i < raw.rows.length; i++) {
+-                            resultSet.push(raw.rows.item(i));
+-                        }
+-                        result.raw = resultSet;
+-                        result.records = resultSet;
+-                    }
+-                    // return id of inserted row, if query was insert statement.
+-                    if (query.startsWith("INSERT INTO")) {
+-                        result.raw = raw.insertId;
+-                    }
+-                    if (useStructuredResult) {
+-                        ok(result);
+-                    }
+-                    else {
+-                        ok(result.raw);
+-                    }
+-                }, async (t, err) => {
+-                    this.driver.connection.logger.logQueryError(err, query, parameters, this);
+-                    this.broadcaster.broadcastAfterQueryEvent(broadcasterResult, query, parameters, false, undefined, undefined, err);
+-                    await broadcasterResult.wait();
+-                    fail(new QueryFailedError(query, parameters, err));
+-                });
+-            }, async (err) => {
+-                await this.rollbackTransaction();
+-                fail(err);
+-            }, () => {
+-                this.isTransactionActive = false;
+-                this.transaction = undefined;
+-            });
+-        });
++        const databaseConnection = await this.connect();
++        const broadcasterResult = new BroadcasterResult();
++        this.driver.connection.logger.logQuery(query, parameters, this);
++        this.broadcaster.broadcastBeforeQueryEvent(broadcasterResult, query, parameters);
++        const queryStartTime = +new Date();
++        const statement = await databaseConnection.prepareAsync(query);
++        try {
++            const rawResult = await statement.executeAsync(parameters);
++            const maxQueryExecutionTime = this.driver.options.maxQueryExecutionTime;
++            const queryEndTime = +new Date();
++            const queryExecutionTime = queryEndTime - queryStartTime;
++            this.broadcaster.broadcastAfterQueryEvent(broadcasterResult, query, parameters, true, queryExecutionTime, rawResult, undefined);
++            await broadcasterResult.wait();
++            if (maxQueryExecutionTime &&
++                queryExecutionTime > maxQueryExecutionTime) {
++                this.driver.connection.logger.logQuerySlow(queryExecutionTime, query, parameters, this);
++            }
++            const result = new QueryResult();
++            result.affected = rawResult.changes;
++            result.records = await rawResult.getAllAsync();
++            result.raw = query.startsWith("INSERT INTO")
++                ? rawResult.lastInsertRowId
++                : result.records;
++            return useStructuredResult ? result : result.raw;
++        }
++        catch (err) {
++            this.driver.connection.logger.logQueryError(err, query, parameters, this);
++            this.broadcaster.broadcastAfterQueryEvent(broadcasterResult, query, parameters, false, 0, undefined, err);
++            await broadcasterResult.wait();
++            throw new QueryFailedError(query, parameters, err);
++        }
++        finally {
++            await statement.finalizeAsync();
++        }
+     }
+ }
+ 
+diff --git a/node_modules/typeorm/browser/driver/expo/ExpoQueryRunner.js.map b/node_modules/typeorm/browser/driver/expo/ExpoQueryRunner.js.map
+index 834e1f3..83595fc 100644
+--- a/node_modules/typeorm/browser/driver/expo/ExpoQueryRunner.js.map
++++ b/node_modules/typeorm/browser/driver/expo/ExpoQueryRunner.js.map
+@@ -1 +1 @@
+-{"version":3,"sources":["../browser/src/driver/expo/ExpoQueryRunner.ts"],"names":[],"mappings":"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","file":"ExpoQueryRunner.js","sourcesContent":["import { QueryRunnerAlreadyReleasedError } from \"../../error/QueryRunnerAlreadyReleasedError\"\nimport { QueryFailedError } from \"../../error/QueryFailedError\"\nimport { AbstractSqliteQueryRunner } from \"../sqlite-abstract/AbstractSqliteQueryRunner\"\nimport { TransactionNotStartedError } from \"../../error/TransactionNotStartedError\"\nimport { ExpoDriver } from \"./ExpoDriver\"\nimport { Broadcaster } from \"../../subscriber/Broadcaster\"\nimport { QueryResult } from \"../../query-runner/QueryResult\"\nimport { BroadcasterResult } from \"../../subscriber/BroadcasterResult\"\n\n// Needed to satisfy the Typescript compiler\ninterface IResultSet {\n    insertId: number | undefined\n    rowsAffected: number\n    rows: {\n        length: number\n        item: (idx: number) => any\n        _array: any[]\n    }\n}\ninterface ITransaction {\n    executeSql: (\n        sql: string,\n        args: any[] | undefined,\n        ok: (tsx: ITransaction, resultSet: IResultSet) => void,\n        fail: (tsx: ITransaction, err: any) => void,\n    ) => void\n}\n\n/**\n * Runs queries on a single sqlite database connection.\n */\nexport class ExpoQueryRunner extends AbstractSqliteQueryRunner {\n    /**\n     * Database driver used by connection.\n     */\n    driver: ExpoDriver\n\n    /**\n     * Database transaction object\n     */\n    private transaction?: ITransaction\n\n    // -------------------------------------------------------------------------\n    // Constructor\n    // -------------------------------------------------------------------------\n\n    constructor(driver: ExpoDriver) {\n        super()\n        this.driver = driver\n        this.connection = driver.connection\n        this.broadcaster = new Broadcaster(this)\n    }\n\n    /**\n     * Starts transaction. Within Expo, all database operations happen in a\n     * transaction context, so issuing a `BEGIN TRANSACTION` command is\n     * redundant and will result in the following error:\n     *\n     * `Error: Error code 1: cannot start a transaction within a transaction`\n     *\n     * Instead, we keep track of a `Transaction` object in `this.transaction`\n     * and continue using the same object until we wish to commit the\n     * transaction.\n     */\n    async startTransaction(): Promise<void> {\n        this.isTransactionActive = true\n        try {\n            await this.broadcaster.broadcast(\"BeforeTransactionStart\")\n        } catch (err) {\n            this.isTransactionActive = false\n            throw err\n        }\n\n        this.transactionDepth += 1\n\n        await this.broadcaster.broadcast(\"AfterTransactionStart\")\n    }\n\n    /**\n     * Commits transaction.\n     * Error will be thrown if transaction was not started.\n     * Since Expo will automatically commit the transaction once all the\n     * callbacks of the transaction object have been completed, \"committing\" a\n     * transaction in this driver's context means that we delete the transaction\n     * object and set the stage for the next transaction.\n     */\n    async commitTransaction(): Promise<void> {\n        if (\n            !this.isTransactionActive &&\n            typeof this.transaction === \"undefined\"\n        )\n            throw new TransactionNotStartedError()\n\n        await this.broadcaster.broadcast(\"BeforeTransactionCommit\")\n\n        this.transaction = undefined\n        this.isTransactionActive = false\n\n        this.transactionDepth -= 1\n\n        await this.broadcaster.broadcast(\"AfterTransactionCommit\")\n    }\n\n    /**\n     * Rollbacks transaction.\n     * Error will be thrown if transaction was not started.\n     * This method's functionality is identical to `commitTransaction()` because\n     * the transaction lifecycle is handled within the Expo transaction object.\n     * Issuing separate statements for `COMMIT` or `ROLLBACK` aren't necessary.\n     */\n    async rollbackTransaction(): Promise<void> {\n        if (\n            !this.isTransactionActive &&\n            typeof this.transaction === \"undefined\"\n        )\n            throw new TransactionNotStartedError()\n\n        await this.broadcaster.broadcast(\"BeforeTransactionRollback\")\n\n        this.transaction = undefined\n        this.isTransactionActive = false\n\n        this.transactionDepth -= 1\n\n        await this.broadcaster.broadcast(\"AfterTransactionRollback\")\n    }\n\n    /**\n     * Called before migrations are run.\n     */\n    async beforeMigration(): Promise<void> {\n        const databaseConnection = await this.connect()\n        return new Promise((ok, fail) => {\n            databaseConnection.exec(\n                [{ sql: \"PRAGMA foreign_keys = OFF\", args: [] }],\n                false,\n                (err: any) => (err ? fail(err) : ok()),\n            )\n        })\n    }\n\n    /**\n     * Called after migrations are run.\n     */\n    async afterMigration(): Promise<void> {\n        const databaseConnection = await this.connect()\n        return new Promise((ok, fail) => {\n            databaseConnection.exec(\n                [{ sql: \"PRAGMA foreign_keys = ON\", args: [] }],\n                false,\n                (err: any) => (err ? fail(err) : ok()),\n            )\n        })\n    }\n\n    /**\n     * Executes a given SQL query.\n     */\n    async query(\n        query: string,\n        parameters?: any[],\n        useStructuredResult = false,\n    ): Promise<any> {\n        if (this.isReleased) throw new QueryRunnerAlreadyReleasedError()\n\n        return new Promise<any>(async (ok, fail) => {\n            const databaseConnection = await this.connect()\n            const broadcasterResult = new BroadcasterResult()\n\n            this.driver.connection.logger.logQuery(query, parameters, this)\n            this.broadcaster.broadcastBeforeQueryEvent(\n                broadcasterResult,\n                query,\n                parameters,\n            )\n\n            const queryStartTime = +new Date()\n            // All Expo SQL queries are executed in a transaction context\n            databaseConnection.transaction(\n                async (transaction: ITransaction) => {\n                    if (typeof this.transaction === \"undefined\") {\n                        await this.startTransaction()\n                        this.transaction = transaction\n                    }\n                    this.transaction.executeSql(\n                        query,\n                        parameters,\n                        async (t: ITransaction, raw: IResultSet) => {\n                            // log slow queries if maxQueryExecution time is set\n                            const maxQueryExecutionTime =\n                                this.driver.options.maxQueryExecutionTime\n                            const queryEndTime = +new Date()\n                            const queryExecutionTime =\n                                queryEndTime - queryStartTime\n\n                            this.broadcaster.broadcastAfterQueryEvent(\n                                broadcasterResult,\n                                query,\n                                parameters,\n                                true,\n                                queryExecutionTime,\n                                raw,\n                                undefined,\n                            )\n                            await broadcasterResult.wait()\n\n                            if (\n                                maxQueryExecutionTime &&\n                                queryExecutionTime > maxQueryExecutionTime\n                            ) {\n                                this.driver.connection.logger.logQuerySlow(\n                                    queryExecutionTime,\n                                    query,\n                                    parameters,\n                                    this,\n                                )\n                            }\n\n                            const result = new QueryResult()\n\n                            if (raw?.hasOwnProperty(\"rowsAffected\")) {\n                                result.affected = raw.rowsAffected\n                            }\n\n                            if (raw?.hasOwnProperty(\"rows\")) {\n                                let resultSet = []\n                                for (let i = 0; i < raw.rows.length; i++) {\n                                    resultSet.push(raw.rows.item(i))\n                                }\n\n                                result.raw = resultSet\n                                result.records = resultSet\n                            }\n\n                            // return id of inserted row, if query was insert statement.\n                            if (query.startsWith(\"INSERT INTO\")) {\n                                result.raw = raw.insertId\n                            }\n\n                            if (useStructuredResult) {\n                                ok(result)\n                            } else {\n                                ok(result.raw)\n                            }\n                        },\n                        async (t: ITransaction, err: any) => {\n                            this.driver.connection.logger.logQueryError(\n                                err,\n                                query,\n                                parameters,\n                                this,\n                            )\n                            this.broadcaster.broadcastAfterQueryEvent(\n                                broadcasterResult,\n                                query,\n                                parameters,\n                                false,\n                                undefined,\n                                undefined,\n                                err,\n                            )\n                            await broadcasterResult.wait()\n\n                            fail(new QueryFailedError(query, parameters, err))\n                        },\n                    )\n                },\n                async (err: any) => {\n                    await this.rollbackTransaction()\n                    fail(err)\n                },\n                () => {\n                    this.isTransactionActive = false\n                    this.transaction = undefined\n                },\n            )\n        })\n    }\n}\n"],"sourceRoot":"../.."}
+\ No newline at end of file
++{"version":3,"sources":["../browser/src/driver/expo/ExpoQueryRunner.ts"],"names":[],"mappings":"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","file":"ExpoQueryRunner.js","sourcesContent":["import { QueryRunnerAlreadyReleasedError } from \"../../error/QueryRunnerAlreadyReleasedError\"\nimport { QueryFailedError } from \"../../error/QueryFailedError\"\nimport { AbstractSqliteQueryRunner } from \"../sqlite-abstract/AbstractSqliteQueryRunner\"\nimport { ExpoDriver } from \"./ExpoDriver\"\nimport { Broadcaster } from \"../../subscriber/Broadcaster\"\nimport { QueryResult } from \"../../query-runner/QueryResult\"\nimport { BroadcasterResult } from \"../../subscriber/BroadcasterResult\"\n\nexport class ExpoQueryRunner extends AbstractSqliteQueryRunner {\n    driver: ExpoDriver\n\n    constructor(driver: ExpoDriver) {\n        super()\n        this.driver = driver\n        this.connection = driver.connection\n        this.broadcaster = new Broadcaster(this)\n    }\n\n    async beforeMigration(): Promise<void> {\n        await this.query(\"PRAGMA foreign_keys = OFF\")\n    }\n\n    async afterMigration(): Promise<void> {\n        await this.query(\"PRAGMA foreign_keys = ON\")\n    }\n\n    async query(\n        query: string,\n        parameters?: any[],\n        useStructuredResult = false,\n    ): Promise<any> {\n        if (this.isReleased) throw new QueryRunnerAlreadyReleasedError()\n\n        const databaseConnection = await this.connect()\n        const broadcasterResult = new BroadcasterResult()\n\n        this.driver.connection.logger.logQuery(query, parameters, this)\n        this.broadcaster.broadcastBeforeQueryEvent(\n            broadcasterResult,\n            query,\n            parameters,\n        )\n\n        const queryStartTime = +new Date()\n\n        const statement = await databaseConnection.prepareAsync(query)\n        try {\n            const rawResult = await statement.executeAsync(parameters)\n\n            const maxQueryExecutionTime =\n                this.driver.options.maxQueryExecutionTime\n            const queryEndTime = +new Date()\n            const queryExecutionTime = queryEndTime - queryStartTime\n\n            this.broadcaster.broadcastAfterQueryEvent(\n                broadcasterResult,\n                query,\n                parameters,\n                true,\n                queryExecutionTime,\n                rawResult,\n                undefined,\n            )\n            await broadcasterResult.wait()\n\n            if (\n                maxQueryExecutionTime &&\n                queryExecutionTime > maxQueryExecutionTime\n            ) {\n                this.driver.connection.logger.logQuerySlow(\n                    queryExecutionTime,\n                    query,\n                    parameters,\n                    this,\n                )\n            }\n\n            const result = new QueryResult()\n            result.affected = rawResult.changes\n            result.records = await rawResult.getAllAsync()\n            result.raw = query.startsWith(\"INSERT INTO\")\n                ? rawResult.lastInsertRowId\n                : result.records\n\n            return useStructuredResult ? result : result.raw\n        } catch (err) {\n            this.driver.connection.logger.logQueryError(\n                err,\n                query,\n                parameters,\n                this,\n            )\n            this.broadcaster.broadcastAfterQueryEvent(\n                broadcasterResult,\n                query,\n                parameters,\n                false,\n                0,\n                undefined,\n                err,\n            )\n            await broadcasterResult.wait()\n\n            throw new QueryFailedError(query, parameters, err)\n        } finally {\n            await statement.finalizeAsync()\n        }\n    }\n}\n"],"sourceRoot":"../.."}
+\ No newline at end of file
+diff --git a/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyDriver.d.ts b/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyDriver.d.ts
+new file mode 100644
+index 0000000..fc1d363
+--- /dev/null
++++ b/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyDriver.d.ts
+@@ -0,0 +1,21 @@
++import { AbstractSqliteDriver } from "../../sqlite-abstract/AbstractSqliteDriver";
++import { ExpoConnectionOptions } from "../ExpoConnectionOptions";
++import { QueryRunner } from "../../../query-runner/QueryRunner";
++import { DataSource } from "../../../data-source/DataSource";
++import { ReplicationMode } from "../../types/ReplicationMode";
++export declare class ExpoLegacyDriver extends AbstractSqliteDriver {
++    options: ExpoConnectionOptions;
++    constructor(connection: DataSource);
++    /**
++     * Closes connection with database.
++     */
++    disconnect(): Promise<void>;
++    /**
++     * Creates a query runner used to execute database queries.
++     */
++    createQueryRunner(mode: ReplicationMode): QueryRunner;
++    /**
++     * Creates connection with the database.
++     */
++    protected createDatabaseConnection(): Promise<void>;
++}
+diff --git a/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyDriver.js b/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyDriver.js
+new file mode 100644
+index 0000000..6c7a672
+--- /dev/null
++++ b/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyDriver.js
+@@ -0,0 +1,71 @@
++import { AbstractSqliteDriver } from "../../sqlite-abstract/AbstractSqliteDriver";
++import { ExpoLegacyQueryRunner } from "./ExpoLegacyQueryRunner";
++export class ExpoLegacyDriver extends AbstractSqliteDriver {
++    // -------------------------------------------------------------------------
++    // Constructor
++    // -------------------------------------------------------------------------
++    constructor(connection) {
++        super(connection);
++        this.database = this.options.database;
++        // load sqlite package
++        this.sqlite = this.options.driver;
++    }
++    // -------------------------------------------------------------------------
++    // Public Methods
++    // -------------------------------------------------------------------------
++    /**
++     * Closes connection with database.
++     */
++    async disconnect() {
++        return new Promise((ok, fail) => {
++            try {
++                this.queryRunner = undefined;
++                this.databaseConnection._db.close();
++                this.databaseConnection = undefined;
++                ok();
++            }
++            catch (error) {
++                fail(error);
++            }
++        });
++    }
++    /**
++     * Creates a query runner used to execute database queries.
++     */
++    createQueryRunner(mode) {
++        if (!this.queryRunner)
++            this.queryRunner = new ExpoLegacyQueryRunner(this);
++        return this.queryRunner;
++    }
++    // -------------------------------------------------------------------------
++    // Protected Methods
++    // -------------------------------------------------------------------------
++    /**
++     * Creates connection with the database.
++     */
++    createDatabaseConnection() {
++        return new Promise((ok, fail) => {
++            try {
++                const databaseConnection = this.sqlite.openDatabase(this.options.database);
++                /*
++                // we need to enable foreign keys in sqlite to make sure all foreign key related features
++                // working properly. this also makes onDelete work with sqlite.
++                */
++                databaseConnection.transaction((tsx) => {
++                    tsx.executeSql(`PRAGMA foreign_keys = ON`, [], (t, result) => {
++                        ok(databaseConnection);
++                    }, (t, err) => {
++                        fail({ transaction: t, error: err });
++                    });
++                }, (err) => {
++                    fail(err);
++                });
++            }
++            catch (error) {
++                fail(error);
++            }
++        });
++    }
++}
++
++//# sourceMappingURL=ExpoLegacyDriver.js.map
+diff --git a/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyDriver.js.map b/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyDriver.js.map
+new file mode 100644
+index 0000000..a5b2e16
+--- /dev/null
++++ b/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyDriver.js.map
+@@ -0,0 +1 @@
++{"version":3,"sources":["../browser/src/driver/expo/legacy/ExpoLegacyDriver.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,oBAAoB,EAAE,MAAM,4CAA4C,CAAA;AAEjF,OAAO,EAAE,qBAAqB,EAAE,MAAM,yBAAyB,CAAA;AAK/D,MAAM,OAAO,gBAAiB,SAAQ,oBAAoB;IAGtD,4EAA4E;IAC5E,cAAc;IACd,4EAA4E;IAE5E,YAAY,UAAsB;QAC9B,KAAK,CAAC,UAAU,CAAC,CAAA;QAEjB,IAAI,CAAC,QAAQ,GAAG,IAAI,CAAC,OAAO,CAAC,QAAQ,CAAA;QAErC,sBAAsB;QACtB,IAAI,CAAC,MAAM,GAAG,IAAI,CAAC,OAAO,CAAC,MAAM,CAAA;IACrC,CAAC;IAED,4EAA4E;IAC5E,iBAAiB;IACjB,4EAA4E;IAE5E;;OAEG;IACH,KAAK,CAAC,UAAU;QACZ,OAAO,IAAI,OAAO,CAAO,CAAC,EAAE,EAAE,IAAI,EAAE,EAAE;YAClC,IAAI,CAAC;gBACD,IAAI,CAAC,WAAW,GAAG,SAAS,CAAA;gBAC5B,IAAI,CAAC,kBAAkB,CAAC,GAAG,CAAC,KAAK,EAAE,CAAA;gBACnC,IAAI,CAAC,kBAAkB,GAAG,SAAS,CAAA;gBACnC,EAAE,EAAE,CAAA;YACR,CAAC;YAAC,OAAO,KAAK,EAAE,CAAC;gBACb,IAAI,CAAC,KAAK,CAAC,CAAA;YACf,CAAC;QACL,CAAC,CAAC,CAAA;IACN,CAAC;IAED;;OAEG;IACH,iBAAiB,CAAC,IAAqB;QACnC,IAAI,CAAC,IAAI,CAAC,WAAW;YACjB,IAAI,CAAC,WAAW,GAAG,IAAI,qBAAqB,CAAC,IAAI,CAAC,CAAA;QAEtD,OAAO,IAAI,CAAC,WAAW,CAAA;IAC3B,CAAC;IAED,4EAA4E;IAC5E,oBAAoB;IACpB,4EAA4E;IAE5E;;OAEG;IACO,wBAAwB;QAC9B,OAAO,IAAI,OAAO,CAAO,CAAC,EAAE,EAAE,IAAI,EAAE,EAAE;YAClC,IAAI,CAAC;gBACD,MAAM,kBAAkB,GAAG,IAAI,CAAC,MAAM,CAAC,YAAY,CAC/C,IAAI,CAAC,OAAO,CAAC,QAAQ,CACxB,CAAA;gBACD;;;kBAGE;gBACF,kBAAkB,CAAC,WAAW,CAC1B,CAAC,GAAQ,EAAE,EAAE;oBACT,GAAG,CAAC,UAAU,CACV,0BAA0B,EAC1B,EAAE,EACF,CAAC,CAAM,EAAE,MAAW,EAAE,EAAE;wBACpB,EAAE,CAAC,kBAAkB,CAAC,CAAA;oBAC1B,CAAC,EACD,CAAC,CAAM,EAAE,GAAQ,EAAE,EAAE;wBACjB,IAAI,CAAC,EAAE,WAAW,EAAE,CAAC,EAAE,KAAK,EAAE,GAAG,EAAE,CAAC,CAAA;oBACxC,CAAC,CACJ,CAAA;gBACL,CAAC,EACD,CAAC,GAAQ,EAAE,EAAE;oBACT,IAAI,CAAC,GAAG,CAAC,CAAA;gBACb,CAAC,CACJ,CAAA;YACL,CAAC;YAAC,OAAO,KAAK,EAAE,CAAC;gBACb,IAAI,CAAC,KAAK,CAAC,CAAA;YACf,CAAC;QACL,CAAC,CAAC,CAAA;IACN,CAAC;CACJ","file":"ExpoLegacyDriver.js","sourcesContent":["import { AbstractSqliteDriver } from \"../../sqlite-abstract/AbstractSqliteDriver\"\nimport { ExpoConnectionOptions } from \"../ExpoConnectionOptions\"\nimport { ExpoLegacyQueryRunner } from \"./ExpoLegacyQueryRunner\"\nimport { QueryRunner } from \"../../../query-runner/QueryRunner\"\nimport { DataSource } from \"../../../data-source/DataSource\"\nimport { ReplicationMode } from \"../../types/ReplicationMode\"\n\nexport class ExpoLegacyDriver extends AbstractSqliteDriver {\n    options: ExpoConnectionOptions\n\n    // -------------------------------------------------------------------------\n    // Constructor\n    // -------------------------------------------------------------------------\n\n    constructor(connection: DataSource) {\n        super(connection)\n\n        this.database = this.options.database\n\n        // load sqlite package\n        this.sqlite = this.options.driver\n    }\n\n    // -------------------------------------------------------------------------\n    // Public Methods\n    // -------------------------------------------------------------------------\n\n    /**\n     * Closes connection with database.\n     */\n    async disconnect(): Promise<void> {\n        return new Promise<void>((ok, fail) => {\n            try {\n                this.queryRunner = undefined\n                this.databaseConnection._db.close()\n                this.databaseConnection = undefined\n                ok()\n            } catch (error) {\n                fail(error)\n            }\n        })\n    }\n\n    /**\n     * Creates a query runner used to execute database queries.\n     */\n    createQueryRunner(mode: ReplicationMode): QueryRunner {\n        if (!this.queryRunner)\n            this.queryRunner = new ExpoLegacyQueryRunner(this)\n\n        return this.queryRunner\n    }\n\n    // -------------------------------------------------------------------------\n    // Protected Methods\n    // -------------------------------------------------------------------------\n\n    /**\n     * Creates connection with the database.\n     */\n    protected createDatabaseConnection() {\n        return new Promise<void>((ok, fail) => {\n            try {\n                const databaseConnection = this.sqlite.openDatabase(\n                    this.options.database,\n                )\n                /*\n                // we need to enable foreign keys in sqlite to make sure all foreign key related features\n                // working properly. this also makes onDelete work with sqlite.\n                */\n                databaseConnection.transaction(\n                    (tsx: any) => {\n                        tsx.executeSql(\n                            `PRAGMA foreign_keys = ON`,\n                            [],\n                            (t: any, result: any) => {\n                                ok(databaseConnection)\n                            },\n                            (t: any, err: any) => {\n                                fail({ transaction: t, error: err })\n                            },\n                        )\n                    },\n                    (err: any) => {\n                        fail(err)\n                    },\n                )\n            } catch (error) {\n                fail(error)\n            }\n        })\n    }\n}\n"],"sourceRoot":"../../.."}
+\ No newline at end of file
+diff --git a/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyQueryRunner.d.ts b/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyQueryRunner.d.ts
+new file mode 100644
+index 0000000..2106fd1
+--- /dev/null
++++ b/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyQueryRunner.d.ts
+@@ -0,0 +1,57 @@
++import { AbstractSqliteQueryRunner } from "../../sqlite-abstract/AbstractSqliteQueryRunner";
++import { ExpoLegacyDriver } from "./ExpoLegacyDriver";
++/**
++ * Runs queries on a single sqlite database connection.
++ */
++export declare class ExpoLegacyQueryRunner extends AbstractSqliteQueryRunner {
++    /**
++     * Database driver used by connection.
++     */
++    driver: ExpoLegacyDriver;
++    /**
++     * Database transaction object
++     */
++    private transaction?;
++    constructor(driver: ExpoLegacyDriver);
++    /**
++     * Starts transaction. Within Expo, all database operations happen in a
++     * transaction context, so issuing a `BEGIN TRANSACTION` command is
++     * redundant and will result in the following error:
++     *
++     * `Error: Error code 1: cannot start a transaction within a transaction`
++     *
++     * Instead, we keep track of a `Transaction` object in `this.transaction`
++     * and continue using the same object until we wish to commit the
++     * transaction.
++     */
++    startTransaction(): Promise<void>;
++    /**
++     * Commits transaction.
++     * Error will be thrown if transaction was not started.
++     * Since Expo will automatically commit the transaction once all the
++     * callbacks of the transaction object have been completed, "committing" a
++     * transaction in this driver's context means that we delete the transaction
++     * object and set the stage for the next transaction.
++     */
++    commitTransaction(): Promise<void>;
++    /**
++     * Rollbacks transaction.
++     * Error will be thrown if transaction was not started.
++     * This method's functionality is identical to `commitTransaction()` because
++     * the transaction lifecycle is handled within the Expo transaction object.
++     * Issuing separate statements for `COMMIT` or `ROLLBACK` aren't necessary.
++     */
++    rollbackTransaction(): Promise<void>;
++    /**
++     * Called before migrations are run.
++     */
++    beforeMigration(): Promise<void>;
++    /**
++     * Called after migrations are run.
++     */
++    afterMigration(): Promise<void>;
++    /**
++     * Executes a given SQL query.
++     */
++    query(query: string, parameters?: any[], useStructuredResult?: boolean): Promise<any>;
++}
+diff --git a/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyQueryRunner.js b/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyQueryRunner.js
+new file mode 100644
+index 0000000..b90ebe8
+--- /dev/null
++++ b/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyQueryRunner.js
+@@ -0,0 +1,165 @@
++import { QueryRunnerAlreadyReleasedError } from "../../../error/QueryRunnerAlreadyReleasedError";
++import { QueryFailedError } from "../../../error/QueryFailedError";
++import { AbstractSqliteQueryRunner } from "../../sqlite-abstract/AbstractSqliteQueryRunner";
++import { TransactionNotStartedError } from "../../../error/TransactionNotStartedError";
++import { Broadcaster } from "../../../subscriber/Broadcaster";
++import { QueryResult } from "../../../query-runner/QueryResult";
++import { BroadcasterResult } from "../../../subscriber/BroadcasterResult";
++/**
++ * Runs queries on a single sqlite database connection.
++ */
++export class ExpoLegacyQueryRunner extends AbstractSqliteQueryRunner {
++    // -------------------------------------------------------------------------
++    // Constructor
++    // -------------------------------------------------------------------------
++    constructor(driver) {
++        super();
++        this.driver = driver;
++        this.connection = driver.connection;
++        this.broadcaster = new Broadcaster(this);
++    }
++    /**
++     * Starts transaction. Within Expo, all database operations happen in a
++     * transaction context, so issuing a `BEGIN TRANSACTION` command is
++     * redundant and will result in the following error:
++     *
++     * `Error: Error code 1: cannot start a transaction within a transaction`
++     *
++     * Instead, we keep track of a `Transaction` object in `this.transaction`
++     * and continue using the same object until we wish to commit the
++     * transaction.
++     */
++    async startTransaction() {
++        this.isTransactionActive = true;
++        try {
++            await this.broadcaster.broadcast("BeforeTransactionStart");
++        }
++        catch (err) {
++            this.isTransactionActive = false;
++            throw err;
++        }
++        this.transactionDepth += 1;
++        await this.broadcaster.broadcast("AfterTransactionStart");
++    }
++    /**
++     * Commits transaction.
++     * Error will be thrown if transaction was not started.
++     * Since Expo will automatically commit the transaction once all the
++     * callbacks of the transaction object have been completed, "committing" a
++     * transaction in this driver's context means that we delete the transaction
++     * object and set the stage for the next transaction.
++     */
++    async commitTransaction() {
++        if (!this.isTransactionActive &&
++            typeof this.transaction === "undefined")
++            throw new TransactionNotStartedError();
++        await this.broadcaster.broadcast("BeforeTransactionCommit");
++        this.transaction = undefined;
++        this.isTransactionActive = false;
++        this.transactionDepth -= 1;
++        await this.broadcaster.broadcast("AfterTransactionCommit");
++    }
++    /**
++     * Rollbacks transaction.
++     * Error will be thrown if transaction was not started.
++     * This method's functionality is identical to `commitTransaction()` because
++     * the transaction lifecycle is handled within the Expo transaction object.
++     * Issuing separate statements for `COMMIT` or `ROLLBACK` aren't necessary.
++     */
++    async rollbackTransaction() {
++        if (!this.isTransactionActive &&
++            typeof this.transaction === "undefined")
++            throw new TransactionNotStartedError();
++        await this.broadcaster.broadcast("BeforeTransactionRollback");
++        this.transaction = undefined;
++        this.isTransactionActive = false;
++        this.transactionDepth -= 1;
++        await this.broadcaster.broadcast("AfterTransactionRollback");
++    }
++    /**
++     * Called before migrations are run.
++     */
++    async beforeMigration() {
++        const databaseConnection = await this.connect();
++        return new Promise((ok, fail) => {
++            databaseConnection.exec([{ sql: "PRAGMA foreign_keys = OFF", args: [] }], false, (err) => (err ? fail(err) : ok()));
++        });
++    }
++    /**
++     * Called after migrations are run.
++     */
++    async afterMigration() {
++        const databaseConnection = await this.connect();
++        return new Promise((ok, fail) => {
++            databaseConnection.exec([{ sql: "PRAGMA foreign_keys = ON", args: [] }], false, (err) => (err ? fail(err) : ok()));
++        });
++    }
++    /**
++     * Executes a given SQL query.
++     */
++    async query(query, parameters, useStructuredResult = false) {
++        if (this.isReleased)
++            throw new QueryRunnerAlreadyReleasedError();
++        return new Promise(async (ok, fail) => {
++            const databaseConnection = await this.connect();
++            const broadcasterResult = new BroadcasterResult();
++            this.driver.connection.logger.logQuery(query, parameters, this);
++            this.broadcaster.broadcastBeforeQueryEvent(broadcasterResult, query, parameters);
++            const queryStartTime = +new Date();
++            // All Expo SQL queries are executed in a transaction context
++            databaseConnection.transaction(async (transaction) => {
++                if (typeof this.transaction === "undefined") {
++                    await this.startTransaction();
++                    this.transaction = transaction;
++                }
++                this.transaction.executeSql(query, parameters, async (t, raw) => {
++                    // log slow queries if maxQueryExecution time is set
++                    const maxQueryExecutionTime = this.driver.options.maxQueryExecutionTime;
++                    const queryEndTime = +new Date();
++                    const queryExecutionTime = queryEndTime - queryStartTime;
++                    this.broadcaster.broadcastAfterQueryEvent(broadcasterResult, query, parameters, true, queryExecutionTime, raw, undefined);
++                    await broadcasterResult.wait();
++                    if (maxQueryExecutionTime &&
++                        queryExecutionTime > maxQueryExecutionTime) {
++                        this.driver.connection.logger.logQuerySlow(queryExecutionTime, query, parameters, this);
++                    }
++                    const result = new QueryResult();
++                    if (raw?.hasOwnProperty("rowsAffected")) {
++                        result.affected = raw.rowsAffected;
++                    }
++                    if (raw?.hasOwnProperty("rows")) {
++                        let resultSet = [];
++                        for (let i = 0; i < raw.rows.length; i++) {
++                            resultSet.push(raw.rows.item(i));
++                        }
++                        result.raw = resultSet;
++                        result.records = resultSet;
++                    }
++                    // return id of inserted row, if query was insert statement.
++                    if (query.startsWith("INSERT INTO")) {
++                        result.raw = raw.insertId;
++                    }
++                    if (useStructuredResult) {
++                        ok(result);
++                    }
++                    else {
++                        ok(result.raw);
++                    }
++                }, async (t, err) => {
++                    this.driver.connection.logger.logQueryError(err, query, parameters, this);
++                    this.broadcaster.broadcastAfterQueryEvent(broadcasterResult, query, parameters, false, undefined, undefined, err);
++                    await broadcasterResult.wait();
++                    fail(new QueryFailedError(query, parameters, err));
++                });
++            }, async (err) => {
++                await this.rollbackTransaction();
++                fail(err);
++            }, () => {
++                this.isTransactionActive = false;
++                this.transaction = undefined;
++            });
++        });
++    }
++}
++
++//# sourceMappingURL=ExpoLegacyQueryRunner.js.map
+diff --git a/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyQueryRunner.js.map b/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyQueryRunner.js.map
+new file mode 100644
+index 0000000..26dc95f
+--- /dev/null
++++ b/node_modules/typeorm/browser/driver/expo/legacy/ExpoLegacyQueryRunner.js.map
+@@ -0,0 +1 @@
++{"version":3,"sources":["../browser/src/driver/expo/legacy/ExpoLegacyQueryRunner.ts"],"names":[],"mappings":"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","file":"ExpoLegacyQueryRunner.js","sourcesContent":["import { QueryRunnerAlreadyReleasedError } from \"../../../error/QueryRunnerAlreadyReleasedError\"\nimport { QueryFailedError } from \"../../../error/QueryFailedError\"\nimport { AbstractSqliteQueryRunner } from \"../../sqlite-abstract/AbstractSqliteQueryRunner\"\nimport { TransactionNotStartedError } from \"../../../error/TransactionNotStartedError\"\nimport { ExpoLegacyDriver } from \"./ExpoLegacyDriver\"\nimport { Broadcaster } from \"../../../subscriber/Broadcaster\"\nimport { QueryResult } from \"../../../query-runner/QueryResult\"\nimport { BroadcasterResult } from \"../../../subscriber/BroadcasterResult\"\n\n// Needed to satisfy the Typescript compiler\ninterface IResultSet {\n    insertId: number | undefined\n    rowsAffected: number\n    rows: {\n        length: number\n        item: (idx: number) => any\n        _array: any[]\n    }\n}\ninterface ITransaction {\n    executeSql: (\n        sql: string,\n        args: any[] | undefined,\n        ok: (tsx: ITransaction, resultSet: IResultSet) => void,\n        fail: (tsx: ITransaction, err: any) => void,\n    ) => void\n}\n\n/**\n * Runs queries on a single sqlite database connection.\n */\nexport class ExpoLegacyQueryRunner extends AbstractSqliteQueryRunner {\n    /**\n     * Database driver used by connection.\n     */\n    driver: ExpoLegacyDriver\n\n    /**\n     * Database transaction object\n     */\n    private transaction?: ITransaction\n\n    // -------------------------------------------------------------------------\n    // Constructor\n    // -------------------------------------------------------------------------\n\n    constructor(driver: ExpoLegacyDriver) {\n        super()\n        this.driver = driver\n        this.connection = driver.connection\n        this.broadcaster = new Broadcaster(this)\n    }\n\n    /**\n     * Starts transaction. Within Expo, all database operations happen in a\n     * transaction context, so issuing a `BEGIN TRANSACTION` command is\n     * redundant and will result in the following error:\n     *\n     * `Error: Error code 1: cannot start a transaction within a transaction`\n     *\n     * Instead, we keep track of a `Transaction` object in `this.transaction`\n     * and continue using the same object until we wish to commit the\n     * transaction.\n     */\n    async startTransaction(): Promise<void> {\n        this.isTransactionActive = true\n        try {\n            await this.broadcaster.broadcast(\"BeforeTransactionStart\")\n        } catch (err) {\n            this.isTransactionActive = false\n            throw err\n        }\n\n        this.transactionDepth += 1\n\n        await this.broadcaster.broadcast(\"AfterTransactionStart\")\n    }\n\n    /**\n     * Commits transaction.\n     * Error will be thrown if transaction was not started.\n     * Since Expo will automatically commit the transaction once all the\n     * callbacks of the transaction object have been completed, \"committing\" a\n     * transaction in this driver's context means that we delete the transaction\n     * object and set the stage for the next transaction.\n     */\n    async commitTransaction(): Promise<void> {\n        if (\n            !this.isTransactionActive &&\n            typeof this.transaction === \"undefined\"\n        )\n            throw new TransactionNotStartedError()\n\n        await this.broadcaster.broadcast(\"BeforeTransactionCommit\")\n\n        this.transaction = undefined\n        this.isTransactionActive = false\n\n        this.transactionDepth -= 1\n\n        await this.broadcaster.broadcast(\"AfterTransactionCommit\")\n    }\n\n    /**\n     * Rollbacks transaction.\n     * Error will be thrown if transaction was not started.\n     * This method's functionality is identical to `commitTransaction()` because\n     * the transaction lifecycle is handled within the Expo transaction object.\n     * Issuing separate statements for `COMMIT` or `ROLLBACK` aren't necessary.\n     */\n    async rollbackTransaction(): Promise<void> {\n        if (\n            !this.isTransactionActive &&\n            typeof this.transaction === \"undefined\"\n        )\n            throw new TransactionNotStartedError()\n\n        await this.broadcaster.broadcast(\"BeforeTransactionRollback\")\n\n        this.transaction = undefined\n        this.isTransactionActive = false\n\n        this.transactionDepth -= 1\n\n        await this.broadcaster.broadcast(\"AfterTransactionRollback\")\n    }\n\n    /**\n     * Called before migrations are run.\n     */\n    async beforeMigration(): Promise<void> {\n        const databaseConnection = await this.connect()\n        return new Promise((ok, fail) => {\n            databaseConnection.exec(\n                [{ sql: \"PRAGMA foreign_keys = OFF\", args: [] }],\n                false,\n                (err: any) => (err ? fail(err) : ok()),\n            )\n        })\n    }\n\n    /**\n     * Called after migrations are run.\n     */\n    async afterMigration(): Promise<void> {\n        const databaseConnection = await this.connect()\n        return new Promise((ok, fail) => {\n            databaseConnection.exec(\n                [{ sql: \"PRAGMA foreign_keys = ON\", args: [] }],\n                false,\n                (err: any) => (err ? fail(err) : ok()),\n            )\n        })\n    }\n\n    /**\n     * Executes a given SQL query.\n     */\n    async query(\n        query: string,\n        parameters?: any[],\n        useStructuredResult = false,\n    ): Promise<any> {\n        if (this.isReleased) throw new QueryRunnerAlreadyReleasedError()\n\n        return new Promise<any>(async (ok, fail) => {\n            const databaseConnection = await this.connect()\n            const broadcasterResult = new BroadcasterResult()\n\n            this.driver.connection.logger.logQuery(query, parameters, this)\n            this.broadcaster.broadcastBeforeQueryEvent(\n                broadcasterResult,\n                query,\n                parameters,\n            )\n\n            const queryStartTime = +new Date()\n            // All Expo SQL queries are executed in a transaction context\n            databaseConnection.transaction(\n                async (transaction: ITransaction) => {\n                    if (typeof this.transaction === \"undefined\") {\n                        await this.startTransaction()\n                        this.transaction = transaction\n                    }\n                    this.transaction.executeSql(\n                        query,\n                        parameters,\n                        async (t: ITransaction, raw: IResultSet) => {\n                            // log slow queries if maxQueryExecution time is set\n                            const maxQueryExecutionTime =\n                                this.driver.options.maxQueryExecutionTime\n                            const queryEndTime = +new Date()\n                            const queryExecutionTime =\n                                queryEndTime - queryStartTime\n\n                            this.broadcaster.broadcastAfterQueryEvent(\n                                broadcasterResult,\n                                query,\n                                parameters,\n                                true,\n                                queryExecutionTime,\n                                raw,\n                                undefined,\n                            )\n                            await broadcasterResult.wait()\n\n                            if (\n                                maxQueryExecutionTime &&\n                                queryExecutionTime > maxQueryExecutionTime\n                            ) {\n                                this.driver.connection.logger.logQuerySlow(\n                                    queryExecutionTime,\n                                    query,\n                                    parameters,\n                                    this,\n                                )\n                            }\n\n                            const result = new QueryResult()\n\n                            if (raw?.hasOwnProperty(\"rowsAffected\")) {\n                                result.affected = raw.rowsAffected\n                            }\n\n                            if (raw?.hasOwnProperty(\"rows\")) {\n                                let resultSet = []\n                                for (let i = 0; i < raw.rows.length; i++) {\n                                    resultSet.push(raw.rows.item(i))\n                                }\n\n                                result.raw = resultSet\n                                result.records = resultSet\n                            }\n\n                            // return id of inserted row, if query was insert statement.\n                            if (query.startsWith(\"INSERT INTO\")) {\n                                result.raw = raw.insertId\n                            }\n\n                            if (useStructuredResult) {\n                                ok(result)\n                            } else {\n                                ok(result.raw)\n                            }\n                        },\n                        async (t: ITransaction, err: any) => {\n                            this.driver.connection.logger.logQueryError(\n                                err,\n                                query,\n                                parameters,\n                                this,\n                            )\n                            this.broadcaster.broadcastAfterQueryEvent(\n                                broadcasterResult,\n                                query,\n                                parameters,\n                                false,\n                                undefined,\n                                undefined,\n                                err,\n                            )\n                            await broadcasterResult.wait()\n\n                            fail(new QueryFailedError(query, parameters, err))\n                        },\n                    )\n                },\n                async (err: any) => {\n                    await this.rollbackTransaction()\n                    fail(err)\n                },\n                () => {\n                    this.isTransactionActive = false\n                    this.transaction = undefined\n                },\n            )\n        })\n    }\n}\n"],"sourceRoot":"../../.."}
+\ No newline at end of file

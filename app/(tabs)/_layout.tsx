@@ -1,11 +1,8 @@
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
 
-import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function TabLayout() {
@@ -14,27 +11,20 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarLabelStyle: {
-          fontFamily: 'Piximisa',
-          fontSize: 12,
+        tabBarStyle: {
+          backgroundColor: '#181818',
+          borderTopWidth: 0,
         },
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
+        tabBarActiveTintColor: '#fff',
+        tabBarInactiveTintColor: '#888',
+        headerShown: false,
+        tabBarShowLabel: false,
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'For You',
+          tabBarIcon: ({ color }) => <MaterialIcons name="favorite" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -47,8 +37,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="workout"
         options={{
-          title: 'Workout',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="figure.run" color={color} />,
+          title: 'Splits',
+          tabBarIcon: ({ color }) => <MaterialIcons name="fitness-center" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -56,13 +46,6 @@ export default function TabLayout() {
         options={{
           title: 'Timer',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="timer" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gear" color={color} />,
         }}
       />
     </Tabs>

@@ -1,4 +1,4 @@
-import { Colors } from '@/constants/Colors';
+import { APP_BACKGROUND } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import React, { useEffect, useRef } from 'react';
 import { Animated, Dimensions, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -34,7 +34,6 @@ export default function InputModal({
   loading,
 }: InputModalProps) {
   const colorScheme = (useColorScheme() ?? 'light') as 'light' | 'dark';
-  const palette = Colors[colorScheme];
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -84,29 +83,29 @@ export default function InputModal({
           <Animated.View
             style={[
               styles.sheet,
-              { backgroundColor: palette.background },
+              { backgroundColor: APP_BACKGROUND },
               shake && { transform: [{ translateX: shakeAnim }] },
             ]}
             pointerEvents="auto"
           >
             <View style={styles.headerRow}>
               <Pressable style={styles.headerButton} onPress={handleClose} disabled={loading}>
-                <ThemedText style={[styles.headerButtonText, { color: loading ? '#aaa' : palette.tint, opacity: loading ? 0.7 : 1 }]}>Cancel</ThemedText>
+                <ThemedText style={[styles.headerButtonText, { color: loading ? '#aaa' : '#fff', opacity: loading ? 0.7 : 1 }]}>Cancel</ThemedText>
               </Pressable>
               <ThemedText style={[styles.sheetTitle, { color: '#fff' }]}>{title}</ThemedText>
               <Pressable style={styles.headerButton} onPress={handleOk} disabled={loading}>
-                <ThemedText style={[styles.headerButtonText, { color: palette.tint, opacity: loading ? 0.5 : 1 }]}>
+                <ThemedText style={[styles.headerButtonText, { color: '#fff', opacity: loading ? 0.5 : 1 }]}>
                   {loading ? 'Saving...' : 'Done'}
                 </ThemedText>
               </Pressable>
             </View>
             <View style={styles.sheetContent}>
               <TextInput
-                style={[styles.input, { color: '#fff', borderColor: error ? '#ff4d4f' : palette.tint, backgroundColor: colorScheme === 'light' ? '#f9f9f9' : '#223' }]}
+                style={[styles.input, { color: '#fff', borderColor: error ? '#ff4d4f' : '#3B82F6', backgroundColor: colorScheme === 'light' ? '#232323' : '#181818' }]}
                 placeholder={placeholder}
                 value={value}
                 onChangeText={onChangeText}
-                placeholderTextColor={palette.icon}
+                placeholderTextColor={'#aaa'}
                 autoFocus
                 onSubmitEditing={() => { if (!loading) { } }}
                 returnKeyType="default"

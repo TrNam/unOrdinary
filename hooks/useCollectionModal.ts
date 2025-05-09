@@ -1,4 +1,5 @@
-import { addCollection, addSplitCollection, getCollections, getSplitCollections, SplitCollection } from '@/database/collections';
+import { addCollection, addSplitCollection, getCollections, getSplitCollections } from '@/database/collections';
+import { SplitCollection } from '@/database/types';
 import { useCallback, useState } from 'react';
 
 // Generic hook
@@ -18,17 +19,23 @@ export function useCollectionModal(
   const [loading, setLoading] = useState(false);
 
   const fetchCollections = useCallback(async () => {
-    const data = await (options?.get ? options.get() : getCollections());
-    setCollections(data);
-    onCollectionsUpdate(data);
+    try {
+      const data = await (options?.get ? options.get() : getCollections());
+      setCollections(data);
+      onCollectionsUpdate(data); // This updates the parent component's state
+      return data; // Return the data for external use if needed
+    } catch (error) {
+      console.error('Error fetching collections:', error);
+      return []; // Return empty array on error
+    }
   }, [onCollectionsUpdate, options]);
 
-  const open = useCallback(() => {
+  const open = useCallback(async () => {
     setVisible(true);
     setInput('');
     setError(undefined);
     setShake(false);
-    fetchCollections();
+    await fetchCollections();
   }, [fetchCollections]);
 
   const close = useCallback(() => {

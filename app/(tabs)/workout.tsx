@@ -1,341 +1,296 @@
-import InputModal from '@/components/InputModal';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { Collection, getCollections, getSplitCollections } from '@/database/collections';
-import { getExercises } from '@/database/exercises';
-import { Exercise } from '@/database/types';
-import { useCollectionModal, useSplitCollectionModal } from '@/hooks/useCollectionModal';
-import { useThemeColor } from '@/hooks/useThemeColor';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import React, { useEffect, useRef, useState } from 'react';
-import { Animated, FlatList, Pressable, SafeAreaView, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
-
-const TABS = ["Exercises", "Splits"];
+import SplitModal from '@/components/SplitModal';
+import { resetDatabase } from '@/database/init';
+import { deleteSplit, getSplits, updateSplitOrder } from '@/database/splits';
+import { Split } from '@/database/types';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Animated, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
+import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function WorkoutScreen() {
-  const [activeTab, setActiveTab] = useState(0);
-  const [showExerciseModal, setShowExerciseModal] = useState(false);
-  const [exerciseName, setExerciseName] = useState('');
-  const { width } = useWindowDimensions();
-  const backgroundColor = useThemeColor({}, 'background');
-  const horizontalPadding = Math.max(16, width * 0.05); // Responsive padding
-  const tabWidth = width / 2;
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [collections, setCollections] = useState<Collection[]>([]);
-  const [splitCollections, setSplitCollections] = useState<any[]>([]);
-  const collectionModal = useCollectionModal(setCollections);
-  const splitCollectionModal = useSplitCollectionModal(setSplitCollections);
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const router = useRouter();
+  const [splits, setSplits] = useState<Split[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [selectedSplit, setSelectedSplit] = useState<Split | null>(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
+  // Load splits
   useEffect(() => {
-    if (activeTab === 0) {
-      getExercises().then(data => {
-        // Only exercises not in a collection
-        const filtered = data.filter(e => !e.collection_id);
-        setExercises(filtered.sort((a, b) => a.name.localeCompare(b.name)));
-      });
-    }
-  }, [activeTab, showExerciseModal]);
-
-  // Animate scale when any modal is open/closed
-  useEffect(() => {
-    const anyModalOpen = collectionModal.visible || splitCollectionModal.visible || showExerciseModal;
-    Animated.timing(scaleAnim, {
-      toValue: anyModalOpen ? 0.9 : 1,
-      duration: 250,
-      useNativeDriver: true,
-    }).start();
-  }, [collectionModal.visible, splitCollectionModal.visible, showExerciseModal]);
-
-  // Debug: Log table contents on mount
-  useEffect(() => {
-    (async () => {
-      try {
-        const collections = await getCollections();
-        console.log('Current collections table:', collections);
-      } catch (e) {
-        console.error('Error reading collections table:', e);
-      }
-      try {
-        const splitCollections = await getSplitCollections();
-        console.log('Current split_collections table:', splitCollections);
-      } catch (e) {
-        console.error('Error reading split_collections table:', e);
-      }
-    })();
+    loadSplits();
   }, []);
 
+  const loadSplits = async () => {
+    try {
+      console.log('Loading splits...');
+      const loadedSplits = await getSplits();
+      console.log('Loaded splits:', loadedSplits);
+      setSplits(loadedSplits);
+    } catch (e) {
+      console.error('Error loading splits:', e);
+    }
+  };
+
+  // Add effect to log state changes
+  useEffect(() => {
+    console.log('Splits state updated:', splits);
+  }, [splits]);
+
+  // Filter splits based on search query
+  const filteredSplits = splits.filter(split =>
+    split.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  console.log('Filtered splits:', filteredSplits); // Add logging for filtered splits
+
+  // Handle split selection
+  const handleSplitPress = (split: Split) => {
+    setSelectedSplit(split);
+    setIsModalVisible(true);
+  };
+
+  // Handle split deletion
+  const handleDeleteSplit = async (split: Split) => {
+    try {
+      await deleteSplit(split.id);
+      setSplits(splits.filter(s => s.id !== split.id));
+    } catch (e) {
+      console.error('Error deleting split:', e);
+    }
+  };
+
+  // Handle modal close
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+    setSelectedSplit(null);
+    loadSplits(); // Reload splits to get any updates
+  };
+
+  // Handle split reordering
+  const handleDragEnd = async ({ data }: { data: Split[] }) => {
+    setSplits(data);
+    // Update order in database
+    for (let i = 0; i < data.length; i++) {
+      await updateSplitOrder(data[i].id, i);
+    }
+  };
+
+  const handleResetDatabase = async () => {
+    try {
+      await resetDatabase();
+      loadSplits(); // Reload the splits list
+    } catch (e) {
+      console.error('Error resetting database:', e);
+    }
+  };
+
+  const renderSplitItem = ({ item, drag, isActive }: RenderItemParams<Split>) => {
+    console.log('Rendering split item:', item); // Add debug logging
+    return (
+      <ScaleDecorator>
+        <Swipeable
+          friction={2}
+          overshootFriction={8}
+          renderRightActions={(progress: Animated.AnimatedInterpolation<any>, dragX: Animated.AnimatedInterpolation<any>) => (
+            <Animated.View style={{ opacity: progress }}>
+              <Pressable
+                style={[styles.swipeAction, { backgroundColor: '#EF4444' }]}
+                onPress={() => handleDeleteSplit(item)}
+              >
+                <MaterialIcons name="delete-outline" size={20} color="#fff" />
+              </Pressable>
+            </Animated.View>
+          )}
+        >
+          <Pressable
+            style={({ pressed }) => [
+              styles.splitItem,
+              pressed && styles.splitItemPressed,
+              isActive && styles.splitItemActive,
+              { borderWidth: 1, borderColor: '#333' } // Add border for visibility
+            ]}
+            onLongPress={drag}
+            onPress={() => handleSplitPress(item)}
+          >
+            <MaterialIcons name="drag-handle" size={20} color="#888" style={{ marginRight: 8 }} />
+            <Text style={styles.splitName}>{item.name}</Text>
+          </Pressable>
+        </Swipeable>
+      </ScaleDecorator>
+    );
+  };
+
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor }]}> 
-      {/* Overlay for depth when modal is open */}
-      {(collectionModal.visible || splitCollectionModal.visible || showExerciseModal) && (
-        <View style={[styles.overlay, { backgroundColor: 'rgba(0,0,0,0.18)' }]} pointerEvents="none" />
-      )}
-      <Animated.View style={{ flex: 1, transform: [{ scale: scaleAnim }] }}>
-        <ThemedView style={[styles.container, { paddingHorizontal: horizontalPadding }]}> 
-          <View style={styles.topTabs}>
-            {TABS.map((tab, idx) => (
-              <Pressable
-                key={tab}
-                style={[styles.tabButton, { width: tabWidth }]}
-                onPress={() => setActiveTab(idx)}
-              >
-                <ThemedText
-                  style={activeTab === idx ? styles.activeTabText : styles.inactiveTabText}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {tab}
-                </ThemedText>
-              </Pressable>
-            ))}
-          </View>
-          <View style={styles.content}>
-            {activeTab === 0 && (
-              <FlatList
-                data={collections.concat(exercises)}
-                keyExtractor={item => ('collection_id' in item ? `exercise-${item.id}` : `collection-${item.id}`)}
-                renderItem={({ item }) =>
-                  'collection_id' in item ? (
-                    <TouchableOpacity style={[styles.listItem, styles.exerciseItem]}>
-                      <MaterialIcons name="fitness-center" size={22} color={styles.listIcon.color} />
-                      <ThemedText style={styles.listText}>{item.name}</ThemedText>
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity style={[styles.listItem, styles.collectionItem]}>
-                      <MaterialIcons name="folder-open" size={22} color={styles.listIcon.color} />
-                      <ThemedText style={[styles.listText, styles.collectionText]}>{item.name}</ThemedText>
-                    </TouchableOpacity>
-                  )
-                }
-                ListEmptyComponent={<ThemedText style={styles.emptyText}>No exercises or collections yet.</ThemedText>}
-              />
-            )}
-            {activeTab === 1 && (
-              <FlatList
-                data={splitCollections}
-                keyExtractor={item => `split-collection-${item.id}`}
-                renderItem={({ item }) => (
-                  <TouchableOpacity style={[styles.listItem, styles.collectionItem]}>
-                    <MaterialIcons name="folder-open" size={22} color={styles.listIcon.color} />
-                    <ThemedText style={[styles.listText, styles.collectionText]}>{item.name}</ThemedText>
-                  </TouchableOpacity>
-                )}
-                ListEmptyComponent={<ThemedText style={styles.emptyText}>No splits yet.</ThemedText>}
-              />
-            )}
-          </View>
-          {/* Floating Action Buttons */}
-          <View style={styles.fabContainer} pointerEvents="box-none">
-            <View style={styles.fabRow}>
-              {activeTab === 0 && (
-                <Pressable
-                  style={styles.iconButton}
-                  onPress={collectionModal.open}
-                  accessibilityLabel="Add Collection"
-                >
-                  <MaterialIcons name="folder-open" size={32} color="#fff" />
-                </Pressable>
-              )}
-              {activeTab === 1 && (
-                <Pressable
-                  style={styles.iconButton}
-                  onPress={splitCollectionModal.open}
-                  accessibilityLabel="Add Split Collection"
-                >
-                  <MaterialIcons name="folder-open" size={32} color="#fff" />
-                </Pressable>
-              )}
-              <Pressable
-                style={[styles.iconButton, { marginLeft: 16 }]}
-                onPress={() => setShowExerciseModal(true)}
-                accessibilityLabel="Add Exercise"
-              >
-                <MaterialIcons name="add-circle-outline" size={32} color="#fff" />
-              </Pressable>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Splits</Text>
+          <Pressable 
+            style={styles.resetButton}
+            onPress={handleResetDatabase}
+          >
+            <MaterialIcons name="refresh" size={24} color="#EF4444" />
+          </Pressable>
+        </View>
+        <View style={styles.searchContainer}>
+          <MaterialIcons name="search" size={20} color="#888" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search"
+            placeholderTextColor="#888"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
+          />
+          {searchQuery.length > 0 && (
+            <Pressable
+              style={styles.clearButton}
+              onPress={() => setSearchQuery('')}
+            >
+              <MaterialIcons name="close" size={20} color="#888" />
+            </Pressable>
+          )}
+        </View>
+        <View style={{ flex: 1 }}>
+          {filteredSplits.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No splits yet</Text>
             </View>
-          </View>
-          {/* Collection Modal */}
-          <InputModal
-            visible={collectionModal.visible}
-            title="New Collection"
-            placeholder="New Collection (eg. Chest)"
-            value={collectionModal.input}
-            onChangeText={collectionModal.onChangeText}
-            onOk={(ref?: React.RefObject<any>) => collectionModal.onOk(ref)}
-            onCancel={collectionModal.close}
-            error={collectionModal.error}
-            shake={collectionModal.shake}
-            onClearError={collectionModal.onClearError}
-            loading={collectionModal.loading}
-          />
-          <InputModal
-            visible={splitCollectionModal.visible}
-            title="New Split"
-            placeholder="New Split (eg. Push Day)"
-            value={splitCollectionModal.input}
-            onChangeText={splitCollectionModal.onChangeText}
-            onOk={(ref?: React.RefObject<any>) => splitCollectionModal.onOk(ref)}
-            onCancel={splitCollectionModal.close}
-            error={splitCollectionModal.error}
-            shake={splitCollectionModal.shake}
-            onClearError={splitCollectionModal.onClearError}
-            loading={splitCollectionModal.loading}
-          />
-          {/* Exercise Modal */}
-          <InputModal
-            visible={showExerciseModal}
-            title={activeTab === 1 ? "New Split" : "New Exercise"}
-            placeholder={activeTab === 1 ? "New Split (eg. Push Day)" : "New Exercise (eg. Barbell Row)"}
-            value={exerciseName}
-            onChangeText={setExerciseName}
-            onOk={async () => {
-              setShowExerciseModal(false);
-              return true;
-            }}
-            onCancel={() => setShowExerciseModal(false)}
-          />
-        </ThemedView>
-      </Animated.View>
-    </SafeAreaView>
+          ) : (
+            <DraggableFlatList
+              data={filteredSplits}
+              onDragEnd={handleDragEnd}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={renderSplitItem}
+              contentContainerStyle={styles.content}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
+        </View>
+        <Pressable
+          style={styles.fab}
+          onPress={() => {
+            setSelectedSplit(null);
+            setIsModalVisible(true);
+          }}
+        >
+          <MaterialIcons name="add" size={24} color="#fff" />
+        </Pressable>
+        <SplitModal
+          visible={isModalVisible}
+          onCancel={handleModalClose}
+          onDone={handleModalClose}
+          initialSplit={selectedSplit}
+        />
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   container: {
     flex: 1,
-    alignItems: 'stretch',
-    justifyContent: 'flex-start',
-    paddingTop: 0,
+    backgroundColor: '#000',
   },
-  topTabs: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
-    width: '100%',
-  },
-  tabButton: {
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  activeTabText: {
-    opacity: 1,
-    fontSize: 16,
-  },
-  inactiveTabText: {
-    opacity: 0.5,
-    fontSize: 16,
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-  },
-  fabContainer: {
-    position: 'absolute',
-    right: 24,
-    bottom: 24,
-    alignItems: 'flex-end',
-    zIndex: 10,
-    pointerEvents: 'box-none',
-    width: '100%',
-    height: '100%',
-    justifyContent: 'flex-end',
-  },
-  fabRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    flex: 1,
-  },
-  iconButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 22,
-    backgroundColor: 'transparent',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    width: '80%',
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 18,
-    marginBottom: 16,
-  },
-  input: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 20,
-    fontSize: 16,
-    color: '#222',
-    backgroundColor: '#f9f9f9',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    width: '100%',
-    gap: 16,
-  },
-  modalButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
-  listItem: {
+  title: {
+    fontSize: 34,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    backgroundColor: 'transparent',
+    backgroundColor: '#232323',
+    borderRadius: 10,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    paddingHorizontal: 12,
   },
-  listIcon: {
-    color: '#1A4862',
-    marginRight: 12,
+  searchIcon: {
+    marginRight: 8,
   },
-  listText: {
+  searchInput: {
+    flex: 1,
+    color: '#fff',
     fontSize: 16,
+    paddingVertical: 12,
   },
-  emptyText: {
-    textAlign: 'center',
-    marginTop: 32,
+  clearButton: {
+    padding: 4,
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 80,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+  emptyStateText: {
     color: '#888',
-  },
-  collectionItem: {
-    backgroundColor: '#f5f5f7',
-    borderRadius: 12,
-    marginBottom: 8,
-    borderBottomWidth: 0,
-    paddingVertical: 16,
-  },
-  collectionText: {
-    fontWeight: '600',
     fontSize: 18,
   },
-  exerciseItem: {
-    backgroundColor: 'transparent',
+  splitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#232323',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
+    minHeight: 60,
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 2,
+  splitItemPressed: {
+    backgroundColor: '#2A2A2A',
+    transform: [{ scale: 0.98 }],
+  },
+  splitItemActive: {
+    backgroundColor: '#2A2A2A',
+    transform: [{ scale: 0.98 }],
+  },
+  splitName: {
+    color: '#fff',
+    fontSize: 16,
+    flex: 1,
+  },
+  fab: {
+    position: 'absolute',
+    right: 16,
+    bottom: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#3B82F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  swipeAction: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 12,
+    marginLeft: 4,
+  },
+  resetButton: {
+    padding: 8,
   },
 }); 

@@ -1,91 +1,47 @@
-import { convertWeight, useSettingsStore } from '@/store/settings';
+import { useSettingsStore } from '@/store/settings';
 import { MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
-import { Animated, Modal, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 interface WorkoutHistoryModalProps {
   visible: boolean;
   onClose: () => void;
-  date: string;
-  exercises: {
-    name: string;
-    sets: { weight: string; reps: string }[];
-  }[];
-  useMetric?: boolean;
+  workoutHistory: {
+    date: string;
+    exercises: {
+      name: string;
+      sets: { weight: string; reps: string; unit: string }[];
+    }[];
+  } | null;
 }
 
-export function WorkoutHistoryModal({ visible, onClose, date, exercises, useMetric: savedUseMetric }: WorkoutHistoryModalProps) {
+export function WorkoutHistoryModal({ visible, onClose, workoutHistory }: WorkoutHistoryModalProps) {
   const { useMetric } = useSettingsStore();
   const pan = React.useRef(new Animated.ValueXY()).current;
-  const [modalHeight] = React.useState(80); // 80% of screen height
-
-  const panResponder = React.useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onPanResponderMove: (_, gesture) => {
-        if (gesture.dy > 0) { // Only allow dragging down
-          pan.y.setValue(gesture.dy);
-        }
-      },
-      onPanResponderRelease: (_, gesture) => {
-        if (gesture.dy > 100) { // If dragged down more than 100 units
-          onClose();
-        } else {
-          Animated.spring(pan, {
-            toValue: { x: 0, y: 0 },
-            useNativeDriver: false,
-          }).start();
-        }
-      },
-    })
-  ).current;
-
-  console.log('Modal received date:', date);
-  // Parse the date string into year, month, and day
-  const formattedDate = date ? (() => {
-    const [year, month, day] = date.split('-').map(Number);
-    return new Date(year, month - 1, day).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  })() : 'No date available';
-  console.log('Formatted date:', formattedDate);
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    if (!dateString) return 'No date available';
+    
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
     });
   };
 
-  const renderExercise = (exercise: WorkoutHistoryModalProps['exercises'][0]) => {
-    return (
-      <View key={exercise.name} style={styles.exerciseItem}>
-        <Text style={styles.exerciseName}>{exercise.name}</Text>
-        <View style={styles.setsList}>
-          {exercise.sets.map((set, setIndex) => {
-            const weight = Number(set.weight);
-            const convertedWeight = savedUseMetric !== undefined ? 
-              convertWeight(weight, savedUseMetric, useMetric) : 
-              weight;
-            
-            return (
-              <View key={setIndex} style={styles.setRow}>
-                <Text style={styles.setNumber}>Set {setIndex + 1}</Text>
-                <Text style={styles.setDetails}>
-                  {convertedWeight.toFixed(1)} {useMetric ? 'kg' : 'lbs'} × {set.reps} reps
-                </Text>
-              </View>
-            );
-          })}
-        </View>
-      </View>
-    );
+  const convertWeight = (weight: number, fromUnit: string, toMetric: boolean): number => {
+    if (fromUnit === 'kg' && !toMetric) {
+      // Convert kg to lbs
+      return weight * 2.20462;
+    } else if (fromUnit === 'lbs' && toMetric) {
+      // Convert lbs to kg
+      return weight / 2.20462;
+    }
+    return weight;
   };
 
   return (
@@ -95,46 +51,45 @@ export function WorkoutHistoryModal({ visible, onClose, date, exercises, useMetr
       transparent={true}
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <Animated.View 
-          style={[
-            styles.modalContent,
-            { transform: [{ translateY: pan.y }] }
-          ]}
-        >
-          <View {...panResponder.panHandlers} style={styles.dragHandle}>
-            <View style={styles.dragIndicator} />
-          </View>
-          
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Workout History</Text>
-            <Text style={styles.modalDate}>{formattedDate}</Text>
+            <Text style={styles.modalDate}>{formatDate(workoutHistory?.date || '')}</Text>
             <Pressable onPress={onClose} style={styles.closeButton}>
-              <MaterialIcons name="close" size={24} color="#888" />
+              <MaterialIcons name="close" size={24} color="#fff" />
             </Pressable>
           </View>
-          
-          <ScrollView style={styles.scrollView}>
-            {exercises.length > 0 ? (
-              <View style={styles.exercisesList}>
-                {exercises.map(renderExercise)}
-              </View>
+          <ScrollView style={styles.exercisesList}>
+            {workoutHistory?.exercises && workoutHistory.exercises.length > 0 ? (
+              workoutHistory.exercises.map((exercise, index) => (
+                <View key={index} style={styles.exerciseItem}>
+                  <Text style={styles.exerciseName}>{exercise.name}</Text>
+                  {exercise.sets.map((set, setIndex) => {
+                    const weight = Number(set.weight);
+                    const convertedWeight = convertWeight(weight, set.unit, useMetric);
+                    return (
+                      <View key={setIndex} style={styles.setItem}>
+                        <Text style={styles.setText}>
+                          Set {setIndex + 1}: {convertedWeight.toFixed(1)} {useMetric ? 'kg' : 'lbs'} x {set.reps} reps
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              ))
             ) : (
-              <View style={styles.emptyState}>
-                <MaterialIcons name="fitness-center" size={48} color="#888" />
-                <Text style={styles.emptyStateText}>No workout recorded</Text>
-                <Text style={styles.emptyStateSubtext}>You didn't work out on this day</Text>
-              </View>
+              <Text style={styles.noWorkoutText}>No workout recorded for this day</Text>
             )}
           </ScrollView>
-        </Animated.View>
+        </View>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  modalContainer: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
@@ -145,29 +100,17 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     height: '80%',
   },
-  dragHandle: {
-    width: '100%',
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dragIndicator: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#444',
-    borderRadius: 2,
-  },
   modalHeader: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#2A2A2A',
   },
   modalTitle: {
     color: '#fff',
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 8,
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 4,
   },
   modalDate: {
     color: '#888',
@@ -176,13 +119,11 @@ const styles = StyleSheet.create({
   closeButton: {
     position: 'absolute',
     right: 20,
-    top: 20,
+    top: 16,
     padding: 4,
   },
-  scrollView: {
-    flex: 1,
-  },
   exercisesList: {
+    flex: 1,
     padding: 20,
     gap: 16,
   },
@@ -190,6 +131,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1A1A1A',
     borderRadius: 12,
     padding: 16,
+    marginBottom: 16,
   },
   exerciseName: {
     color: '#fff',
@@ -197,39 +139,17 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginBottom: 12,
   },
-  setsList: {
-    gap: 8,
-  },
-  setRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  setItem: {
     backgroundColor: '#232323',
     borderRadius: 8,
     padding: 12,
   },
-  setNumber: {
-    color: '#888',
-    fontSize: 14,
-    width: 60,
-  },
-  setDetails: {
+  setText: {
     color: '#fff',
     fontSize: 16,
   },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 32,
-  },
-  emptyStateText: {
+  noWorkoutText: {
     color: '#fff',
-    fontSize: 20,
-    fontWeight: '600',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyStateSubtext: {
-    color: '#888',
     fontSize: 16,
     textAlign: 'center',
   },

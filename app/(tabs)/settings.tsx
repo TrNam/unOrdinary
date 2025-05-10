@@ -8,29 +8,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function SettingsScreen() {
   const { isDarkMode, useMetric, toggleTheme, toggleUnit } = useSettingsStore();
 
-  const handleResetDatabase = () => {
-    Alert.alert(
-      'Reset Database',
-      'Are you sure you want to reset the database? This will delete all your data.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel'
-        },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await resetDatabase();
-              Alert.alert('Success', 'Database has been reset successfully.');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to reset database.');
-            }
-          }
-        }
-      ]
-    );
+  const handleResetDatabase = async () => {
+    try {
+      await resetDatabase();
+      Alert.alert('Success', 'Database has been reset.');
+    } catch (error) {
+      console.error('Error resetting database:', error);
+      Alert.alert('Error', 'Failed to reset database. Please try again.');
+    }
   };
 
   return (

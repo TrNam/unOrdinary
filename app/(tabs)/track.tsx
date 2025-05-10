@@ -24,7 +24,7 @@ interface ExerciseSet {
 
 interface WorkoutHistoryModalData {
   name: string;
-  sets: { weight: string; reps: string }[];
+  sets: { weight: string; reps: string; unit: 'kg' | 'lbs' }[];
 }
 
 interface WorkoutHistory {
@@ -240,15 +240,14 @@ export default function TrackScreen() {
     React.useCallback(() => {
       loadSplits();
       return () => {
+        // Don't reset the workout state when tab changes
       };
     }, [])
   );
 
   const loadSplits = async () => {
     try {
-      console.log('Track: Loading splits...');
       const loadedSplits = await getSplits();
-      console.log('Track: Loaded splits:', JSON.stringify(loadedSplits, null, 2));
       setSplits(loadedSplits);
       
       if (loadedSplits.length > 0) {
@@ -266,7 +265,6 @@ export default function TrackScreen() {
           setCurrentDayWorkout(initialWorkout);
         }
       } else {
-        console.log('Track: No splits found');
         setSelectedSplit(null);
         setCurrentDayWorkout([]);
       }
@@ -277,22 +275,10 @@ export default function TrackScreen() {
 
   // Also load data when component mounts
   React.useEffect(() => {
-    console.log('Track: Component mounted, loading data...');
     loadSplits();
   }, []);
 
-  // Update selected split when default split changes
-  React.useEffect(() => {
-    if (splits.length > 0) {
-      const defaultSplit = splits.find(split => split.is_default === 1);
-      if (defaultSplit && (!selectedSplit || selectedSplit.id !== defaultSplit.id)) {
-        setSelectedSplit(defaultSplit);
-      }
-    }
-  }, [splits]);
-
   const updateCurrentDayWorkout = (split: Split) => {
-    console.log('Track: Updating workout for split:', JSON.stringify(split, null, 2));
     // Get current day (0-6, where 0 is Sunday)
     const today = new Date().getDay();
     // Convert to our day format (0-6, where 0 is Monday)
@@ -300,16 +286,12 @@ export default function TrackScreen() {
     // If today is Saturday (6), show Saturday's workout (5)
     // Otherwise, show the current day's workout (subtract 1 to convert from Sunday=0 to Monday=0)
     const adjustedDay = today === 0 ? 0 : today - 1;
-    console.log('Track: Current day:', today, 'Adjusted day:', adjustedDay);
     setCurrentDay(adjustedDay);
     
     // Get the workout for today from the split
-    console.log('Track: Available days:', split.days?.map(d => ({ day: d.day_of_week, name: d.name })));
     const dayWorkout = split.days?.find(d => d.day_of_week === adjustedDay)?.exercises || [];
-    console.log('Track: Day workout:', JSON.stringify(dayWorkout, null, 2));
     // Sort exercises by order_index to maintain the order
     const sortedExercises = [...dayWorkout].sort((a, b) => a.order_index - b.order_index);
-    console.log('Track: Sorted exercises:', JSON.stringify(sortedExercises, null, 2));
     setCurrentDayWorkout(sortedExercises.map(ex => ({ ...ex, sets: [] })));
   };
 
@@ -318,9 +300,7 @@ export default function TrackScreen() {
     if (selectedSplit) {
       const loadSplitData = async () => {
         try {
-          console.log('Track: Loading data for split:', selectedSplit);
           const fullSplitData = await getSplitWithDaysAndExercises(selectedSplit.id);
-          console.log('Track: Loaded split data:', JSON.stringify(fullSplitData, null, 2));
           updateCurrentDayWorkout(fullSplitData);
         } catch (e) {
           console.error('Track: Error loading split data:', e);
@@ -417,16 +397,18 @@ export default function TrackScreen() {
         name: exercise.name,
         sets: exercise.sets.map(set => ({
           weight: set.weight.toString(),
-          reps: set.reps.toString()
+          reps: set.reps.toString(),
+          unit: useMetric ? 'kg' : 'lbs'
         }))
       }));
-
+      
       await saveWorkoutHistory(
         selectedSplit.id,
-        currentDay,
+        new Date().toISOString().split('T')[0], // Get today's date in YYYY-MM-DD format
         exercisesToSave,
         useMetric
       );
+      
       Alert.alert('Success', 'Workout saved successfully!');
     } catch (error) {
       console.error('Error saving workout:', error);
@@ -435,29 +417,19 @@ export default function TrackScreen() {
   };
 
   const handleDayPress = async (day: { dateString: string }) => {
-    const date = day.dateString; // This is in YYYY-MM-DD format
-    console.log('Calendar date:', date);
+    const date = day.dateString;
     setSelectedDate(date);
     if (!selectedSplit) return;
 
     try {
-      // Get the day of week for the selected date (0-6, where 0 is Sunday)
-      const selectedDateObj = new Date(date + 'T00:00:00'); // Add time to ensure correct timezone handling
-      console.log('Selected date object:', selectedDateObj);
+      const selectedDateObj = new Date(date + 'T00:00:00');
       const dayOfWeek = selectedDateObj.getDay();
-      // Convert to our day format (0-6, where 0 is Monday)
       const adjustedDayOfWeek = dayOfWeek === 0 ? 0 : dayOfWeek - 1;
 
-      console.log('Selected date:', date);
-      console.log('Day of week:', dayOfWeek);
-      console.log('Adjusted day of week:', adjustedDayOfWeek);
-
       const history = await getWorkoutHistory(date, selectedSplit.id, adjustedDayOfWeek);
-      console.log('History from DB:', history);
       
-      // Always create a workout history object with the selected date
       const workoutHistory: WorkoutHistory = {
-        date: date, // Use the selected date
+        date: date,
         split_id: selectedSplit.id,
         day_of_week: adjustedDayOfWeek,
         exercises: history ? (Array.isArray(history.exercises)
@@ -466,13 +438,13 @@ export default function TrackScreen() {
               sets: Array.isArray(ex.sets)
                 ? ex.sets.map((set: any) => ({
                     weight: set.weight.toString(),
-                    reps: set.reps.toString()
+                    reps: set.reps.toString(),
+                    unit: set.unit || (useMetric ? 'kg' : 'lbs') // Use saved unit or current setting
                   }))
                 : []
             }))
           : []) : []
       };
-      console.log('Workout history to display:', workoutHistory);
       setSelectedHistory(workoutHistory);
       setShowHistoryModal(true);
     } catch (error) {
@@ -575,8 +547,7 @@ export default function TrackScreen() {
         <WorkoutHistoryModal
           visible={showHistoryModal}
           onClose={() => setShowHistoryModal(false)}
-          date={selectedHistory?.date || ''}
-          exercises={selectedHistory?.exercises || []}
+          workoutHistory={selectedHistory}
         />
       </SafeAreaView>
     );
@@ -639,8 +610,7 @@ export default function TrackScreen() {
       <WorkoutHistoryModal
         visible={showHistoryModal}
         onClose={() => setShowHistoryModal(false)}
-        date={selectedHistory?.date || ''}
-        exercises={selectedHistory?.exercises || []}
+        workoutHistory={selectedHistory}
       />
     </SafeAreaView>
   );

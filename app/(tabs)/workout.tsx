@@ -6,7 +6,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
+import { Alert, Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -57,6 +57,14 @@ export default function WorkoutScreen() {
   // Handle split deletion
   const handleDeleteSplit = async (split: Split) => {
     try {
+      if (split.is_default === 1) {
+        Alert.alert(
+          'Cannot Delete Default Split',
+          'Please set another split as default before deleting this one.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
       await deleteSplit(split.id);
       setSplits(splits.filter(s => s.id !== split.id));
     } catch (e) {
@@ -114,15 +122,7 @@ export default function WorkoutScreen() {
       >
         <View style={styles.splitContent}>
           <View style={styles.splitInfo}>
-            <Text style={styles.splitName}>{item.name}</Text>
-            {item.is_default === 1 && (
-              <View style={styles.defaultBadge}>
-                <Text style={styles.defaultBadgeText}>Default</Text>
-              </View>
-            )}
-          </View>
-          {isEditMode ? (
-            <View style={styles.splitButtons}>
+            {isEditMode && (
               <Pressable 
                 style={styles.dragHandle}
                 onPressIn={drag}
@@ -130,15 +130,23 @@ export default function WorkoutScreen() {
               >
                 <MaterialIcons name="drag-handle" size={24} color="#888" />
               </Pressable>
-              <Pressable 
-                style={styles.deleteButton}
-                onPress={() => handleDeleteSplit(item)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <MaterialIcons name="delete" size={24} color="#EF4444" />
-              </Pressable>
-            </View>
-          ) : null}
+            )}
+            <Text style={styles.splitName}>{item.name}</Text>
+            {item.is_default === 1 && (
+              <View style={styles.defaultBadge}>
+                <Text style={styles.defaultBadgeText}>Default</Text>
+              </View>
+            )}
+          </View>
+          {isEditMode && (
+            <Pressable 
+              style={styles.deleteButton}
+              onPress={() => handleDeleteSplit(item)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <MaterialIcons name="delete" size={24} color="#EF4444" />
+            </Pressable>
+          )}
         </View>
       </Pressable>
     </ScaleDecorator>
@@ -327,7 +335,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     flex: 1,
-    marginLeft: 8,
   },
   emptyState: {
     flex: 1,
@@ -377,7 +384,6 @@ const styles = StyleSheet.create({
   },
   dragHandle: {
     padding: 4,
-    marginRight: 4,
     zIndex: 1,
     minWidth: 32,
     minHeight: 32,

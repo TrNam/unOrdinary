@@ -250,34 +250,44 @@ export const getFavoriteSplit = async (): Promise<Split | null> => {
   );
 };
 
-export async function saveWorkoutHistory(
-  splitId: number, 
-  dayOfWeek: number, 
-  exercises: { name: string; sets: { weight: string; reps: string }[] }[],
+export const saveWorkoutHistory = async (
+  splitId: number,
+  date: string,
+  exercises: { name: string; sets: { weight: string; reps: string; unit: 'kg' | 'lbs' }[] }[],
   useMetric: boolean
-) {
+) => {
   const db = await initDB();
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-
   try {
-    // First, delete any existing entry for today
-    await db.runAsync(
-      'DELETE FROM workout_history WHERE date = ? AND split_id = ? AND day_of_week = ?',
-      [today, splitId, dayOfWeek]
+    const dayOfWeek = new Date(date + 'T00:00:00').getDay();
+    const adjustedDayOfWeek = dayOfWeek === 0 ? 0 : dayOfWeek - 1;
+
+    // Convert exercises to JSON string with units
+    const exercisesJson = JSON.stringify(exercises);
+
+    // Check if a workout already exists for this date and split
+    const existingWorkout = await db.getFirstAsync<{ id: number }>(
+      'SELECT id FROM workout_history WHERE date = ? AND split_id = ?',
+      [date, splitId]
     );
 
-    // Insert new workout history with unit information
-    await db.runAsync(
-      'INSERT INTO workout_history (date, split_id, day_of_week, exercises, use_metric) VALUES (?, ?, ?, ?, ?)',
-      [today, splitId, dayOfWeek, JSON.stringify(exercises), useMetric ? 1 : 0]
-    );
-
-    return true;
+    if (existingWorkout) {
+      // Update existing workout
+      await db.runAsync(
+        'UPDATE workout_history SET exercises = ? WHERE id = ?',
+        [exercisesJson, existingWorkout.id]
+      );
+    } else {
+      // Insert new workout
+      await db.runAsync(
+        'INSERT INTO workout_history (split_id, date, day_of_week, exercises) VALUES (?, ?, ?, ?)',
+        [splitId, date, adjustedDayOfWeek, exercisesJson]
+      );
+    }
   } catch (error) {
     console.error('Error saving workout history:', error);
     throw error;
   }
-}
+};
 
 export async function getWorkoutHistory(date: string, splitId: number, dayOfWeek: number): Promise<{
   date: string;
@@ -288,17 +298,24 @@ export async function getWorkoutHistory(date: string, splitId: number, dayOfWeek
 } | null> {
   const db = await initDB();
   try {
-    const result = await db.getFirstAsync(
-      'SELECT * FROM workout_history WHERE date = ? AND split_id = ? AND day_of_week = ?',
-      [date, splitId, dayOfWeek]
-    );
-    return result as {
+    const result = await db.getFirstAsync<{
       date: string;
       split_id: number;
       day_of_week: number;
-      exercises: any;
+      exercises: string;
       use_metric: number;
-    } | null;
+    }>(
+      'SELECT * FROM workout_history WHERE date = ? AND split_id = ? AND day_of_week = ?',
+      [date, splitId, dayOfWeek]
+    );
+    
+    if (!result) return null;
+    
+    // Parse the exercises JSON string
+    return {
+      ...result,
+      exercises: JSON.parse(result.exercises)
+    };
   } catch (error) {
     console.error('Error getting workout history:', error);
     throw error;

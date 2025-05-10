@@ -1,28 +1,25 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { Calendar } from 'react-native-calendars';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function ForYouScreen() {
+export default function HomeScreen() {
+  const router = useRouter();
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>For You</Text>
+        <Text style={styles.title}>Workouts</Text>
       </View>
-      <Calendar
-        theme={{
-          backgroundColor: '#000',
-          calendarBackground: '#000',
-          textSectionTitleColor: '#fff',
-          selectedDayBackgroundColor: '#3B82F6',
-          selectedDayTextColor: '#fff',
-          todayTextColor: '#3B82F6',
-          dayTextColor: '#fff',
-          textDisabledColor: '#444',
-          monthTextColor: '#fff',
-          arrowColor: '#3B82F6',
-        }}
-        style={styles.calendar}
-      />
+      <View style={styles.content}>
+        <Pressable
+          style={styles.createButton}
+          onPress={() => router.push('/workout')}
+        >
+          <MaterialIcons name="add" size={24} color="#fff" />
+          <Text style={styles.createButtonText}>Create a Split</Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }
@@ -41,9 +38,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#fff',
   },
-  calendar: {
-    marginTop: 8,
-    borderRadius: 12,
-    marginHorizontal: 16,
+  content: {
+    flex: 1,
+    padding: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  createButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  createButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

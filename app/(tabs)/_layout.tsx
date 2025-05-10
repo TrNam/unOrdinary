@@ -1,8 +1,8 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { Platform } from 'react-native';
 
-import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function TabLayout() {
@@ -12,40 +12,40 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarStyle: {
-          backgroundColor: '#181818',
+          backgroundColor: '#000',
           borderTopWidth: 0,
+          elevation: 0,
+          height: Platform.OS === 'ios' ? 88 : 60,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
         },
-        tabBarActiveTintColor: '#fff',
+        tabBarActiveTintColor: '#3B82F6',
         tabBarInactiveTintColor: '#888',
         headerShown: false,
         tabBarShowLabel: false,
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'For You',
           tabBarIcon: ({ color }) => <MaterialIcons name="favorite" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="track"
         options={{
-          title: 'Track',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.line.uptrend.xyaxis" color={color} />,
+          tabBarIcon: ({ color }) => <MaterialIcons name="history" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="workout"
         options={{
-          title: 'Splits',
-          tabBarIcon: ({ color }) => <MaterialIcons name="fitness-center" size={24} color={color} />,
+          tabBarIcon: ({ color }) => <MaterialIcons name="list" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="timer"
+        name="settings"
         options={{
-          title: 'Timer',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="timer" color={color} />,
+          tabBarIcon: ({ color }) => <MaterialIcons name="settings" size={24} color={color} />,
         }}
       />
     </Tabs>

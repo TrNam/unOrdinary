@@ -1,13 +1,14 @@
 import SplitModal from '@/components/SplitModal';
-import { resetDatabase } from '@/database/init';
+import resetDatabase from '@/database/init';
 import { deleteSplit, getSplits, updateSplitOrder } from '@/database/splits';
 import { Split } from '@/database/types';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
-import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function WorkoutScreen() {
@@ -17,6 +18,16 @@ export default function WorkoutScreen() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedSplit, setSelectedSplit] = useState<Split | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  // Exit edit mode when tab changes
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        setIsEditMode(false);
+      };
+    }, [])
+  );
 
   // Load splits
   useEffect(() => {
@@ -25,26 +36,17 @@ export default function WorkoutScreen() {
 
   const loadSplits = async () => {
     try {
-      console.log('Loading splits...');
       const loadedSplits = await getSplits();
-      console.log('Loaded splits:', loadedSplits);
       setSplits(loadedSplits);
     } catch (e) {
       console.error('Error loading splits:', e);
     }
   };
 
-  // Add effect to log state changes
-  useEffect(() => {
-    console.log('Splits state updated:', splits);
-  }, [splits]);
-
   // Filter splits based on search query
   const filteredSplits = splits.filter(split =>
     split.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  console.log('Filtered splits:', filteredSplits); // Add logging for filtered splits
 
   // Handle split selection
   const handleSplitPress = (split: Split) => {
@@ -66,128 +68,170 @@ export default function WorkoutScreen() {
   const handleModalClose = () => {
     setIsModalVisible(false);
     setSelectedSplit(null);
-    loadSplits(); // Reload splits to get any updates
+    loadSplits();
   };
 
-  // Handle split reordering
+  // Add drag-and-drop functionality
   const handleDragEnd = async ({ data }: { data: Split[] }) => {
-    setSplits(data);
-    // Update order in database
+    // Update the order in the database for each split
     for (let i = 0; i < data.length; i++) {
       await updateSplitOrder(data[i].id, i);
     }
+    // Update local state
+    setSplits(data);
   };
 
   const handleResetDatabase = async () => {
     try {
       await resetDatabase();
-      loadSplits(); // Reload the splits list
+      loadSplits();
     } catch (e) {
       console.error('Error resetting database:', e);
     }
   };
 
-  const renderSplitItem = ({ item, drag, isActive }: RenderItemParams<Split>) => {
-    console.log('Rendering split item:', item); // Add debug logging
-    return (
-      <ScaleDecorator>
-        <Swipeable
-          friction={2}
-          overshootFriction={8}
-          renderRightActions={(progress: Animated.AnimatedInterpolation<any>, dragX: Animated.AnimatedInterpolation<any>) => (
-            <Animated.View style={{ opacity: progress }}>
-              <Pressable
-                style={[styles.swipeAction, { backgroundColor: '#EF4444' }]}
-                onPress={() => handleDeleteSplit(item)}
-              >
-                <MaterialIcons name="delete-outline" size={20} color="#fff" />
-              </Pressable>
-            </Animated.View>
-          )}
-        >
-          <Pressable
-            style={({ pressed }) => [
-              styles.splitItem,
-              pressed && styles.splitItemPressed,
-              isActive && styles.splitItemActive,
-              { borderWidth: 1, borderColor: '#333' } // Add border for visibility
-            ]}
-            onLongPress={drag}
-            onPress={() => handleSplitPress(item)}
-          >
-            <MaterialIcons name="drag-handle" size={20} color="#888" style={{ marginRight: 8 }} />
-            <Text style={styles.splitName}>{item.name}</Text>
-          </Pressable>
-        </Swipeable>
-      </ScaleDecorator>
-    );
+  const handleAddSplit = () => {
+    setIsEditMode(false);
+    setSelectedSplit(null);
+    setIsModalVisible(true);
   };
 
-  return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Splits</Text>
-          <Pressable 
-            style={styles.resetButton}
-            onPress={handleResetDatabase}
-          >
-            <MaterialIcons name="refresh" size={24} color="#EF4444" />
-          </Pressable>
-        </View>
-        <View style={styles.searchContainer}>
-          <MaterialIcons name="search" size={20} color="#888" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search"
-            placeholderTextColor="#888"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onFocus={() => setIsSearchFocused(true)}
-            onBlur={() => setIsSearchFocused(false)}
-          />
-          {searchQuery.length > 0 && (
-            <Pressable
-              style={styles.clearButton}
-              onPress={() => setSearchQuery('')}
-            >
-              <MaterialIcons name="close" size={20} color="#888" />
-            </Pressable>
-          )}
-        </View>
-        <View style={{ flex: 1 }}>
-          {filteredSplits.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No splits yet</Text>
-            </View>
-          ) : (
-            <DraggableFlatList
-              data={filteredSplits}
-              onDragEnd={handleDragEnd}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={renderSplitItem}
-              contentContainerStyle={styles.content}
-              showsVerticalScrollIndicator={false}
-            />
-          )}
-        </View>
-        <Pressable
-          style={styles.fab}
-          onPress={() => {
-            setSelectedSplit(null);
+  const renderSplitItem = ({ item, drag, isActive }: RenderItemParams<Split>) => (
+    <ScaleDecorator>
+      <Pressable
+        onLongPress={isEditMode ? drag : undefined}
+        disabled={isActive}
+        onPress={() => {
+          if (!isEditMode) {
+            setSelectedSplit(item);
             setIsModalVisible(true);
-          }}
-        >
-          <MaterialIcons name="add" size={24} color="#fff" />
-        </Pressable>
-        <SplitModal
-          visible={isModalVisible}
-          onCancel={handleModalClose}
-          onDone={handleModalClose}
-          initialSplit={selectedSplit}
-        />
+          }
+        }}
+        style={[
+          styles.splitItem,
+          isActive && { backgroundColor: '#2A2A2A' }
+        ]}
+      >
+        <View style={styles.splitContent}>
+          <View style={styles.splitInfo}>
+            <Text style={styles.splitName}>{item.name}</Text>
+            {item.is_default === 1 && (
+              <View style={styles.defaultBadge}>
+                <Text style={styles.defaultBadgeText}>Default</Text>
+              </View>
+            )}
+          </View>
+          {isEditMode ? (
+            <View style={styles.splitButtons}>
+              <Pressable 
+                style={styles.dragHandle}
+                onPressIn={drag}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <MaterialIcons name="drag-handle" size={24} color="#888" />
+              </Pressable>
+              <Pressable 
+                style={styles.deleteButton}
+                onPress={() => handleDeleteSplit(item)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <MaterialIcons name="delete" size={24} color="#EF4444" />
+              </Pressable>
+            </View>
+          ) : null}
+        </View>
+      </Pressable>
+    </ScaleDecorator>
+  );
+
+  return (
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <TouchableWithoutFeedback onPress={() => {
+          Keyboard.dismiss();
+          setIsSearchFocused(false);
+        }}>
+          <View style={styles.content}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Your Splits</Text>
+              <View style={styles.headerButtons}>
+                <Pressable 
+                  style={styles.editButton}
+                  onPress={() => setIsEditMode(!isEditMode)}
+                >
+                  <MaterialIcons 
+                    name={isEditMode ? "check" : "edit"} 
+                    size={24} 
+                    color={isEditMode ? "#4CAF50" : "#3B82F6"} 
+                  />
+                </Pressable>
+                <Pressable 
+                  style={styles.addButton}
+                  onPress={handleAddSplit}
+                >
+                  <Text>
+                    <MaterialIcons name="add" size={24} color="#fff" />
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+            <View style={styles.searchContainer}>
+              <Text>
+                <MaterialIcons name="search" size={20} color="#888" />
+              </Text>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search"
+                placeholderTextColor="#888"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
+              />
+              {searchQuery.length > 0 ? (
+                <Pressable
+                  style={styles.clearButton}
+                  onPress={() => setSearchQuery('')}
+                >
+                  <Text>
+                    <MaterialIcons name="close" size={20} color="#888" />
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+            {filteredSplits.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text>
+                  <MaterialIcons name="fitness-center" size={48} color="#888" />
+                </Text>
+                <Text style={styles.emptyStateText}>No splits yet</Text>
+                <Text style={styles.emptyStateSubtext}>Create your first split workout</Text>
+              </View>
+            ) : (
+              <GestureHandlerRootView style={{ flex: 1 }}>
+                <DraggableFlatList
+                  data={filteredSplits}
+                  onDragEnd={handleDragEnd}
+                  keyExtractor={(item) => item.id.toString()}
+                  renderItem={renderSplitItem}
+                  contentContainerStyle={styles.listContent}
+                  simultaneousHandlers={[]}
+                  activationDistance={20}
+                  dragHitSlop={{ top: 0, bottom: 0, left: 0, right: 0 }}
+                  containerStyle={{ flex: 1 }}
+                />
+              </GestureHandlerRootView>
+            )}
+            <SplitModal
+              visible={isModalVisible}
+              onCancel={handleModalClose}
+              onDone={handleModalClose}
+              initialSplit={selectedSplit}
+            />
+          </View>
+        </TouchableWithoutFeedback>
       </SafeAreaView>
-    </GestureHandlerRootView>
+    </View>
   );
 }
 
@@ -196,17 +240,44 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
+  safeArea: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+  },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 8,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   title: {
     fontSize: 34,
     fontWeight: '700',
     color: '#fff',
+  },
+  addButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#3B82F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#232323',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -217,80 +288,154 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     paddingHorizontal: 12,
   },
-  searchIcon: {
-    marginRight: 8,
-  },
   searchInput: {
     flex: 1,
     color: '#fff',
     fontSize: 16,
     paddingVertical: 12,
+    marginLeft: 8,
   },
   clearButton: {
     padding: 4,
   },
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 80,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 32,
-  },
-  emptyStateText: {
-    color: '#888',
-    fontSize: 18,
+  listContent: {
+    paddingBottom: 100,
   },
   splitItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: '#232323',
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
-    minHeight: 60,
+    marginHorizontal: 16,
+    marginVertical: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   splitItemPressed: {
     backgroundColor: '#2A2A2A',
     transform: [{ scale: 0.98 }],
   },
-  splitItemActive: {
-    backgroundColor: '#2A2A2A',
-    transform: [{ scale: 0.98 }],
+  splitInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   splitName: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: '500',
     flex: 1,
+    marginLeft: 8,
   },
-  fab: {
-    position: 'absolute',
-    right: 16,
-    bottom: 16,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#3B82F6',
+  emptyState: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4,
+    padding: 16,
+  },
+  emptyStateText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyStateSubtext: {
+    color: '#888',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  rightAction: {
+    backgroundColor: '#EF4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+  },
+  deleteButton: {
+    padding: 4,
+    marginLeft: 8,
+    zIndex: 1,
+    minWidth: 32,
+    minHeight: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  splitItemActive: {
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+    backgroundColor: '#2A2A2A',
+  },
+  splitContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 12,
+    flex: 1,
+  },
+  dragHandle: {
+    padding: 4,
+    marginRight: 4,
+    zIndex: 1,
+    minWidth: 32,
+    minHeight: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuButton: {
+    padding: 4,
+    marginLeft: 8,
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  menuContent: {
+    backgroundColor: '#232323',
+    borderRadius: 12,
+    padding: 4,
+    width: 100,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
+    elevation: 5,
   },
-  swipeAction: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
+  menuOption: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
-    marginLeft: 4,
-  },
-  resetButton: {
     padding: 8,
+    gap: 8,
+    borderRadius: 8,
+  },
+  menuOptionText: {
+    color: '#fff',
+    fontSize: 13,
+  },
+  deleteOptionText: {
+    color: '#EF4444',
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: '#333',
+    marginVertical: 2,
+  },
+  defaultBadge: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  defaultBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  splitButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 }); 

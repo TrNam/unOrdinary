@@ -32,7 +32,20 @@ export interface SplitCollection {
 export interface Split {
   id: number;
   name: string;
-  created_at?: string;
+  created_at: string;
+  order_index: number;
+  is_favorite: number;
+  is_default: number;
+  days?: {
+    id: number;
+    day_of_week: number;
+    name: string;
+    exercises: {
+      id: number;
+      name: string;
+      order_index: number;
+    }[];
+  }[];
 }
 
 export interface SplitDay {

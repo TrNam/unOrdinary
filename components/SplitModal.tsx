@@ -1,8 +1,8 @@
-import { addSplit, addSplitDay, addSplitDayExercise, deleteSplit, deleteSplitDay, deleteSplitDayExercise, getSplitWithDaysAndExercises, getSplits, updateSplit, updateSplitDayExercise } from '@/database/splits';
+import { addSplit, addSplitDay, addSplitDayExercise, deleteSplitDay, deleteSplitDayExercise, getSplitWithDaysAndExercises, getSplits, setDefaultSplit, updateSplit, updateSplitDayExercise } from '@/database/splits';
 import { Split } from '@/database/types';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Animated, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -38,6 +38,11 @@ export default function SplitModal({
   const [splitName, setSplitName] = useState('');
   const [error, setError] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
+  const [isDefault, setIsDefault] = useState(initialSplit?.is_default === 1);
+  const [showDefaultConfirm, setShowDefaultConfirm] = useState(false);
+  const [defaultConfirmMessage, setDefaultConfirmMessage] = useState('');
+  const [exerciseInputs, setExerciseInputs] = useState<{ [key: number]: string }>({});
+  const [splitData, setSplitData] = useState<Split | null>(null);
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const [dayInputs, setDayInputs] = useState<DayInput[]>(
     Array(7).fill('').map(() => ({ 
@@ -57,6 +62,10 @@ export default function SplitModal({
       setSplitName('');
       setError(undefined);
       setLoading(false);
+      setIsDefault(false);
+      setShowDefaultConfirm(false);
+      setDefaultConfirmMessage('');
+      setExerciseInputs({});
       setDayInputs(Array(7).fill('').map(() => ({ 
         input: '', 
         error: undefined, 
@@ -66,17 +75,47 @@ export default function SplitModal({
         shakeAnim: new Animated.Value(0)
       })));
       setIsEditing(false);
+      setSplitData(null);
     } else if (initialSplit) {
-      // Load initial split data
       setSplitName(initialSplit.name);
-      loadSplitData(initialSplit.id);
+      setIsDefault(initialSplit.is_default === 1);
       setIsEditing(true);
+    }
+  }, [visible, initialSplit]);
+
+  // Load split data when modal becomes visible
+  useEffect(() => {
+    if (visible && initialSplit) {
+      loadSplitData(initialSplit.id);
+    } else if (visible) {
+      // Reset state for new split
+      setSplitName('');
+      setIsDefault(false);
+      setDayInputs(Array(7).fill('').map(() => ({ 
+        input: '', 
+        error: undefined, 
+        exercises: [], 
+        editingId: null, 
+        editingText: '',
+        shakeAnim: new Animated.Value(0)
+      })));
+      setExerciseInputs({});
+      setError(undefined);
+
+      // Check if this is the first split
+      getSplits().then(splits => {
+        if (splits.length === 0) {
+          setIsDefault(true);
+        }
+      });
     }
   }, [visible, initialSplit]);
 
   const loadSplitData = async (splitId: number) => {
     try {
       const splitData = await getSplitWithDaysAndExercises(splitId);
+      setSplitData(splitData);
+      
       const newDayInputs: DayInput[] = Array(7).fill(null).map(() => ({ 
         input: '', 
         error: undefined, 
@@ -87,7 +126,7 @@ export default function SplitModal({
       }));
       
       // Sort days by day_of_week to ensure correct order
-      const sortedDays = [...splitData.days].sort((a, b) => a.day_of_week - b.day_of_week);
+      const sortedDays = [...(splitData.days || [])].sort((a, b) => a.day_of_week - b.day_of_week);
       
       sortedDays.forEach(day => {
         // Sort exercises by order_index
@@ -109,6 +148,7 @@ export default function SplitModal({
       });
       
       setDayInputs(newDayInputs);
+      setExerciseInputs({});
     } catch (e) {
       console.error('Error loading split data:', e);
       setError('Error loading split data');
@@ -176,40 +216,39 @@ export default function SplitModal({
   }
 
   // Add exercise to a day
-  const handleAddExercise = (dayIdx: number) => {
-    const input = dayInputs[dayIdx].input.trim();
-    if (!input) {
-      updateDayInputs(dayIdx, { error: 'Cannot be empty' });
-      shake(dayIdx);
+  const handleAddExercise = async (dayIndex: number) => {
+    const exerciseName = exerciseInputs[dayIndex]?.trim();
+    if (!exerciseName) {
+      console.log('No exercise name provided');
       return;
     }
-    if (dayInputs[dayIdx].exercises.some(e => e.name.toLowerCase() === input.toLowerCase())) {
-      updateDayInputs(dayIdx, { error: 'Already exists' });
-      shake(dayIdx);
-      return;
+
+    try {
+      // Update local state only
+      const newDayInputs = [...dayInputs];
+      const currentExercises = newDayInputs[dayIndex].exercises || [];
+      const newExercise = {
+        id: Math.random().toString(),
+        name: exerciseName,
+        order: currentExercises.length,
+        dbId: undefined
+      };
+      
+      newDayInputs[dayIndex] = {
+        ...newDayInputs[dayIndex],
+        exercises: [...currentExercises, newExercise]
+      };
+      
+      setDayInputs(newDayInputs);
+      // Clear the input field
+      setExerciseInputs({ ...exerciseInputs, [dayIndex]: '' });
+    } catch (error) {
+      console.error('Error adding exercise:', error);
     }
-    updateDayInputs(dayIdx, {
-      exercises: [...dayInputs[dayIdx].exercises, { 
-        id: Math.random().toString(), 
-        name: input, 
-        order: dayInputs[dayIdx].exercises.length 
-      }],
-      input: '',
-      error: undefined,
-    });
   };
 
   // Delete exercise from a day
   const handleDeleteExercise = async (dayIdx: number, exerciseId: string) => {
-    const exercise = dayInputs[dayIdx].exercises.find(ex => ex.id === exerciseId);
-    if (exercise?.dbId) {
-      try {
-        await deleteSplitDayExercise(exercise.dbId);
-      } catch (e) {
-        console.error('Error deleting exercise:', e);
-        return;
-      }
-    }
     updateDayInputs(dayIdx, {
       exercises: dayInputs[dayIdx].exercises.filter(ex => ex.id !== exerciseId)
     });
@@ -246,15 +285,22 @@ export default function SplitModal({
 
     setLoading(true);
     try {
-      let splitId;
+      let splitId: number | undefined;
       if (initialSplit) {
         // Update existing split
-        await updateSplit(initialSplit.id, splitName.trim());
+        await updateSplit(initialSplit.id, splitName.trim(), initialSplit.is_favorite === 1);
         splitId = initialSplit.id;
+
+        // If this split is being set as default, update all other splits
+        if (isDefault) {
+          await Promise.all(existingSplits.map(split => 
+            setDefaultSplit(split.id, split.id === splitId)
+          ));
+        }
 
         // Get existing split data to compare
         const existingData = await getSplitWithDaysAndExercises(splitId);
-        const existingDayMap = new Map(existingData.days.map(day => [day.day_of_week, day]));
+        const existingDayMap = new Map((existingData.days || []).map(day => [day.day_of_week, day]));
 
         // Update exercises for each day
         for (let i = 0; i < 7; ++i) {
@@ -300,6 +346,18 @@ export default function SplitModal({
       } else {
         // Create new split
         splitId = await addSplit(splitName.trim());
+        
+        // If this is the first split or being set as default, update all splits
+        if (isDefault) {
+          await Promise.all(existingSplits.map(split => 
+            setDefaultSplit(split.id, false)
+          ));
+          await setDefaultSplit(splitId!, true);
+        } else if (existingSplits.length === 0) {
+          // If this is the first split, set it as default
+          await setDefaultSplit(splitId!, true);
+        }
+
         // For each day, save split_day and exercises
         for (let i = 0; i < 7; ++i) {
           if (dayInputs[i].exercises.length === 0) continue;
@@ -319,14 +377,77 @@ export default function SplitModal({
   };
 
   // Handle modal close
-  const handleClose = () => {
-    if (isEditing) {
-      // If editing, reload the data to discard changes
-      if (initialSplit) {
-        loadSplitData(initialSplit.id);
+  const handleClose = async () => {
+    if (initialSplit) {
+      // Reset to initial state
+      setSplitName(initialSplit.name);
+      setIsDefault(initialSplit.is_default === 1);
+      setError(undefined);
+      setExerciseInputs({});
+      
+      // Reload original data
+      const originalData = await getSplitWithDaysAndExercises(initialSplit.id);
+      if (originalData) {
+        setSplitData(originalData);
+        
+        // Reset day inputs with original data
+        const newDayInputs: DayInput[] = Array(7).fill(null).map(() => ({ 
+          input: '', 
+          error: undefined, 
+          exercises: [], 
+          editingId: null, 
+          editingText: '',
+          shakeAnim: new Animated.Value(0)
+        }));
+        
+        if (originalData.days) {
+          originalData.days.forEach(day => {
+            newDayInputs[day.day_of_week] = {
+              input: '',
+              error: undefined,
+              exercises: day.exercises.map(ex => ({
+                id: Math.random().toString(),
+                name: ex.name,
+                order: ex.order_index,
+                dbId: ex.id
+              })),
+              editingId: null,
+              editingText: '',
+              shakeAnim: new Animated.Value(0)
+            };
+          });
+        }
+        
+        setDayInputs(newDayInputs);
       }
     }
     onCancel();
+  };
+
+  const handleDefaultToggle = async () => {
+    if (!isDefault) {
+      // When turning ON default, just update state
+      setIsDefault(true);
+      setError(undefined);
+    } else {
+      // When turning OFF default, show error message
+      setError('To change the default split, please select another split and set it as default');
+    }
+  };
+
+  const confirmDefaultToggle = async () => {
+    try {
+      // Set all other splits as non-default
+      const splits = await getSplits();
+      await Promise.all(splits.map(split => 
+        setDefaultSplit(split.id, split.id === initialSplit?.id)
+      ));
+      setIsDefault(true);
+      setShowDefaultConfirm(false);
+    } catch (e) {
+      console.error('Error setting default split:', e);
+      setError('Error setting default split');
+    }
   };
 
   const renderExerciseItem = ({ item, drag, isActive }: RenderItemParams<Exercise>) => {
@@ -383,19 +504,53 @@ export default function SplitModal({
                 keyboardDismissMode="on-drag"
               >
                 <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-                  <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
-                    <TextInput
-                      style={[
-                        styles.splitNameInput,
-                        error && styles.inputError
-                      ]}
-                      placeholder="Split name (e.g. PPL, Bro Split)"
-                      value={splitName}
-                      onChangeText={setSplitName}
-                      placeholderTextColor="#aaa"
+                  <TextInput
+                    style={[
+                      styles.splitNameInput,
+                      error && !error.includes('default split') && styles.inputError
+                    ]}
+                    placeholder="Split name (e.g. PPL, Bro Split)"
+                    value={splitName}
+                    onChangeText={setSplitName}
+                    placeholderTextColor="#aaa"
+                  />
+                  {error && !error.includes('default split') && <Text style={styles.errorText}>{error}</Text>}
+
+                  <View style={styles.defaultToggleContainer}>
+                    <Text style={styles.defaultToggleLabel}>Set as default split</Text>
+                    <Switch
+                      value={isDefault}
+                      onValueChange={handleDefaultToggle}
+                      trackColor={{ false: '#767577', true: '#4CAF50' }}
+                      thumbColor={isDefault ? '#fff' : '#f4f3f4'}
                     />
-                    {error && <Text style={styles.errorText}>{error}</Text>}
-                  </Animated.View>
+                  </View>
+                  {error && error.includes('default split') && (
+                    <Text style={[styles.errorText, styles.defaultToggleError]}>
+                      {error}
+                    </Text>
+                  )}
+
+                  {showDefaultConfirm && (
+                    <View style={styles.confirmDialog}>
+                      <Text style={styles.confirmText}>Are you sure you want to set this split as default?</Text>
+                      <View style={styles.confirmButtons}>
+                        <Pressable 
+                          style={[styles.confirmButton, styles.cancelButton]}
+                          onPress={() => setShowDefaultConfirm(false)}
+                        >
+                          <Text style={styles.confirmButtonText}>Cancel</Text>
+                        </Pressable>
+                        <Pressable 
+                          style={[styles.confirmButton, styles.confirmButtonPrimary]}
+                          onPress={confirmDefaultToggle}
+                        >
+                          <Text style={[styles.confirmButtonText, styles.confirmButtonTextPrimary]}>Confirm</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  )}
+
                   {DAYS.map((day, i) => (
                     <View key={day} style={styles.daySection}>
                       <View style={styles.dayHeader}>
@@ -417,26 +572,15 @@ export default function SplitModal({
                         <Animated.View style={{ flex: 1, transform: [{ translateX: dayInputs[i].shakeAnim }] }}>
                           <View style={styles.inputContainer}>
                             <TextInput
-                              style={[
-                                styles.input,
-                                dayInputs[i].error && styles.inputError
-                              ]}
+                              style={styles.exerciseInput}
+                              value={exerciseInputs[i] || ''}
+                              onChangeText={(text) => setExerciseInputs(prev => ({ ...prev, [i]: text }))}
                               placeholder="Add exercise"
-                              value={dayInputs[i].input}
-                              onChangeText={text => updateDayInputs(i, { input: text, error: undefined })}
-                              placeholderTextColor="#aaa"
-                              onSubmitEditing={() => Keyboard.dismiss()}
+                              placeholderTextColor="#666"
+                              autoCapitalize="none"
+                              autoCorrect={false}
                             />
-                            {dayInputs[i].input.length > 0 && (
-                              <Pressable
-                                style={styles.clearInputButton}
-                                onPress={() => updateDayInputs(i, { input: '', error: undefined })}
-                              >
-                                <MaterialIcons name="close" size={20} color="#888" />
-                              </Pressable>
-                            )}
                           </View>
-                          {dayInputs[i].error && <Text style={styles.errorText}>{dayInputs[i].error}</Text>}
                         </Animated.View>
                         <Pressable 
                           style={styles.addButton} 
@@ -453,23 +597,6 @@ export default function SplitModal({
                 </KeyboardAvoidingView>
               </ScrollView>
             </View>
-            {initialSplit && (
-              <View style={styles.modalFooter}>
-                <Pressable 
-                  style={[styles.footerButton, styles.deleteButton]} 
-                  onPress={async () => {
-                    try {
-                      await deleteSplit(initialSplit.id);
-                      onDone();
-                    } catch (e) {
-                      setError('Error deleting split');
-                    }
-                  }}
-                >
-                  <Text style={[styles.buttonText, styles.deleteButtonText]}>Delete</Text>
-                </Pressable>
-              </View>
-            )}
           </View>
         </View>
       </GestureHandlerRootView>
@@ -554,12 +681,13 @@ const styles = StyleSheet.create({
   splitNameInput: {
     backgroundColor: '#232323',
     borderRadius: 8,
-    padding: 12,
+    padding: 16,
     color: '#fff',
-    fontSize: 16,
-    marginBottom: 4,
+    fontSize: 24,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: 'transparent',
+    height: 80,
   },
   daySection: {
     marginBottom: 16,
@@ -604,7 +732,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'transparent',
   },
-  input: {
+  exerciseInput: {
     flex: 1,
     padding: 12,
     color: '#fff',
@@ -640,5 +768,74 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     color: '#fff',
+  },
+  defaultToggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    paddingHorizontal: 4,
+  },
+  defaultToggleLabel: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  defaultToggle: {
+    width: 50,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#2A2A2A',
+    padding: 2,
+  },
+  defaultToggleActive: {
+    backgroundColor: '#3B82F6',
+  },
+  defaultToggleKnob: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+  },
+  defaultToggleKnobActive: {
+    transform: [{ translateX: 22 }],
+  },
+  confirmDialog: {
+    backgroundColor: '#232323',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+  },
+  confirmText: {
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  confirmButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  confirmButtonPrimary: {
+    backgroundColor: '#3B82F6',
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  confirmButtonTextPrimary: {
+    color: '#fff',
+  },
+  defaultToggleError: {
+    marginTop: 8,
+    marginBottom: 0,
   },
 }); 

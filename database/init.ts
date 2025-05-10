@@ -2,9 +2,12 @@ import * as SQLite from 'expo-sqlite';
 
 const DB_NAME = 'workout.db';
 
-export const initDB = async () => {
-  console.log('Initializing database...');
-  const db = SQLite.openDatabaseSync(DB_NAME);
+let db: SQLite.SQLiteDatabase | null = null;
+
+export async function initDB() {
+  if (db) return db;
+
+  db = await SQLite.openDatabaseAsync(DB_NAME);
   
   // Enable foreign keys
   await db.execAsync('PRAGMA foreign_keys = ON;');
@@ -29,6 +32,8 @@ export const initDB = async () => {
     CREATE TABLE IF NOT EXISTS splits (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
+      is_favorite INTEGER DEFAULT 0,
+      is_default INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       order_index INTEGER DEFAULT 0
     );
@@ -52,12 +57,21 @@ export const initDB = async () => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       split_day_id INTEGER,
       exercise_id INTEGER,
-      sets INTEGER DEFAULT 3,
-      reps INTEGER DEFAULT 10,
       order_index INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (split_day_id) REFERENCES split_days(id) ON DELETE CASCADE,
       FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS workout_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT NOT NULL,
+      split_id INTEGER NOT NULL,
+      day_of_week INTEGER NOT NULL,
+      exercises TEXT NOT NULL,
+      use_metric INTEGER NOT NULL DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (split_id) REFERENCES splits(id) ON DELETE CASCADE
     );
   `);
 
@@ -107,28 +121,60 @@ export const initDB = async () => {
     `);
   }
 
-  console.log('Database initialized successfully');
-  return db;
-};
+  // Check if is_favorite column exists in splits table
+  const splitsColumns = await db.getAllAsync<{ name: string }>(`
+    SELECT name FROM pragma_table_info('splits');
+  `);
 
-export const resetDatabase = async () => {
-  console.log('Resetting database...');
-  const db = SQLite.openDatabaseSync(DB_NAME);
+  const hasIsFavorite = splitsColumns.some(col => col.name === 'is_favorite');
+  const hasIsDefault = splitsColumns.some(col => col.name === 'is_default');
+
+  // If is_favorite doesn't exist, add it
+  if (!hasIsFavorite) {
+    await db.execAsync(`
+      BEGIN TRANSACTION;
+      
+      -- Add is_favorite column
+      ALTER TABLE splits ADD COLUMN is_favorite INTEGER DEFAULT 0;
+      
+      COMMIT;
+    `);
+  }
+
+  // If is_default doesn't exist, add it and set the first split as default
+  if (!hasIsDefault) {
+    await db.execAsync(`
+      BEGIN TRANSACTION;
+      
+      -- Add is_default column
+      ALTER TABLE splits ADD COLUMN is_default INTEGER DEFAULT 0;
+      
+      -- Set the first split as default
+      UPDATE splits 
+      SET is_default = 1 
+      WHERE id = (SELECT id FROM splits ORDER BY created_at ASC LIMIT 1);
+      
+      COMMIT;
+    `);
+  }
+
+  return db;
+}
+
+export async function resetDatabase() {
+  if (!db) return;
   
   await db.execAsync(`
     PRAGMA foreign_keys = OFF;
-    BEGIN TRANSACTION;
-    
     DROP TABLE IF EXISTS split_day_exercises;
+    DROP TABLE IF EXISTS exercises;
     DROP TABLE IF EXISTS split_days;
     DROP TABLE IF EXISTS splits;
-    DROP TABLE IF EXISTS exercises;
-    DROP TABLE IF EXISTS split_collections;
-    DROP TABLE IF EXISTS collections;
-    
-    COMMIT;
+    DROP TABLE IF EXISTS workout_history;
     PRAGMA foreign_keys = ON;
   `);
+  
+  await initDB();
+}
 
-  console.log('Database reset complete');
-};
+export default initDB;

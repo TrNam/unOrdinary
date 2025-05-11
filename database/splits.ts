@@ -264,6 +264,14 @@ export const saveWorkoutHistory = async (
     // Convert exercises to JSON string with units
     const exercisesJson = JSON.stringify(exercises);
 
+    console.log('Saving workout:', {
+      date,
+      splitId,
+      dayOfWeek,
+      adjustedDayOfWeek,
+      exercisesCount: exercises.length
+    });
+
     // Check if a workout already exists for this date and split
     const existingWorkout = await db.getFirstAsync<{ id: number }>(
       'SELECT id FROM workout_history WHERE date = ? AND split_id = ?',
@@ -271,17 +279,20 @@ export const saveWorkoutHistory = async (
     );
 
     if (existingWorkout) {
+      console.log('Updating existing workout with ID:', existingWorkout.id);
       // Update existing workout
       await db.runAsync(
         'UPDATE workout_history SET exercises = ? WHERE id = ?',
         [exercisesJson, existingWorkout.id]
       );
     } else {
+      console.log('Creating new workout');
       // Insert new workout
-      await db.runAsync(
-        'INSERT INTO workout_history (split_id, date, day_of_week, exercises) VALUES (?, ?, ?, ?)',
-        [splitId, date, adjustedDayOfWeek, exercisesJson]
+      const result = await db.runAsync(
+        'INSERT INTO workout_history (split_id, date, day_of_week, exercises, use_metric) VALUES (?, ?, ?, ?, ?)',
+        [splitId, date, adjustedDayOfWeek, exercisesJson, useMetric ? 1 : 0]
       );
+      console.log('Created workout with ID:', result.lastInsertRowId);
     }
   } catch (error) {
     console.error('Error saving workout history:', error);
@@ -298,6 +309,12 @@ export async function getWorkoutHistory(date: string, splitId: number, dayOfWeek
 } | null> {
   const db = await initDB();
   try {
+    console.log('Retrieving workout:', {
+      requestedDate: date,
+      splitId,
+      dayOfWeek
+    });
+
     const result = await db.getFirstAsync<{
       date: string;
       split_id: number;
@@ -305,17 +322,29 @@ export async function getWorkoutHistory(date: string, splitId: number, dayOfWeek
       exercises: string;
       use_metric: number;
     }>(
-      'SELECT * FROM workout_history WHERE date = ? AND split_id = ? AND day_of_week = ?',
-      [date, splitId, dayOfWeek]
+      'SELECT * FROM workout_history WHERE date = ? AND split_id = ?',
+      [date, splitId]
     );
     
-    if (!result) return null;
+    console.log('Database query result:', result);
+    
+    if (!result) {
+      console.log('No workout found for the requested date');
+      return null;
+    }
     
     // Parse the exercises JSON string
-    return {
+    const parsedResult = {
       ...result,
       exercises: JSON.parse(result.exercises)
     };
+    
+    console.log('Returning workout:', {
+      date: parsedResult.date,
+      exercisesCount: parsedResult.exercises.length
+    });
+    
+    return parsedResult;
   } catch (error) {
     console.error('Error getting workout history:', error);
     throw error;

@@ -1,21 +1,40 @@
-import { resetDatabase } from '@/database/init';
+import { initDB } from '@/database/init';
 import { useSettingsStore } from '@/store/settings';
 import { MaterialIcons } from '@expo/vector-icons';
-import React from 'react';
-import { Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import * as React from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
-  const { isDarkMode, useMetric, toggleTheme, toggleUnit } = useSettingsStore();
+  const { useMetric, setUseMetric } = useSettingsStore();
+  const router = useRouter();
 
-  const handleResetDatabase = async () => {
-    try {
-      await resetDatabase();
-      Alert.alert('Success', 'Database has been reset.');
-    } catch (error) {
-      console.error('Error resetting database:', error);
-      Alert.alert('Error', 'Failed to reset database. Please try again.');
-    }
+  const handleClearWorkoutHistory = async () => {
+    Alert.alert(
+      'Clear Workout History',
+      'Are you sure you want to clear all your workout history? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Clear History',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const db = await initDB();
+              await db.runAsync('DELETE FROM workout_history;');
+              Alert.alert('Success', 'Workout history has been cleared.');
+            } catch (error) {
+              console.error('Error clearing workout history:', error);
+              Alert.alert('Error', 'Failed to clear workout history. Please try again.');
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -23,40 +42,31 @@ export default function SettingsScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Settings</Text>
       </View>
-      <View style={styles.content}>
+      <ScrollView style={styles.content}>
         <View style={styles.section}>
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <MaterialIcons name="dark-mode" size={24} color="#fff" />
-              <Text style={styles.settingText}>Dark Mode</Text>
-            </View>
-            <Switch
-              value={isDarkMode}
-              onValueChange={toggleTheme}
-              trackColor={{ false: '#767577', true: '#3B82F6' }}
-              thumbColor={isDarkMode ? '#fff' : '#f4f3f4'}
-            />
+          <Text style={styles.sectionTitle}>Units</Text>
+          <View style={styles.option}>
+            <Text style={styles.optionText}>Use Metric System</Text>
+            <Pressable
+              style={[styles.toggle, useMetric && styles.toggleActive]}
+              onPress={() => setUseMetric(!useMetric)}
+            >
+              <View style={[styles.toggleHandle, useMetric && styles.toggleHandleActive]} />
+            </Pressable>
           </View>
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <MaterialIcons name="scale" size={24} color="#fff" />
-              <Text style={styles.settingText}>Use Metric Units</Text>
-            </View>
-            <Switch
-              value={useMetric}
-              onValueChange={toggleUnit}
-              trackColor={{ false: '#767577', true: '#3B82F6' }}
-              thumbColor={useMetric ? '#fff' : '#f4f3f4'}
-            />
-          </View>
-          <Pressable style={styles.settingItem} onPress={handleResetDatabase}>
-            <View style={styles.settingInfo}>
-              <MaterialIcons name="delete" size={24} color="#EF4444" />
-              <Text style={[styles.settingText, { color: '#EF4444' }]}>Reset Database</Text>
-            </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Data Management</Text>
+          <Pressable
+            style={styles.dangerButton}
+            onPress={handleClearWorkoutHistory}
+          >
+            <MaterialIcons name="delete-outline" size={24} color="#EF4444" />
+            <Text style={styles.dangerButtonText}>Clear Workout History</Text>
           </Pressable>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -80,25 +90,56 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   section: {
-    backgroundColor: '#232323',
-    borderRadius: 12,
-    overflow: 'hidden',
+    marginBottom: 24,
   },
-  settingItem: {
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 16,
+  },
+  option: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: '#232323',
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2A2A2A',
+    borderRadius: 12,
   },
-  settingInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  settingText: {
+  optionText: {
     color: '#fff',
     fontSize: 16,
+  },
+  toggle: {
+    width: 50,
+    height: 28,
+    backgroundColor: '#444',
+    borderRadius: 14,
+    padding: 2,
+  },
+  toggleActive: {
+    backgroundColor: '#3B82F6',
+  },
+  toggleHandle: {
+    width: 24,
+    height: 24,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+  },
+  toggleHandleActive: {
+    transform: [{ translateX: 22 }],
+  },
+  dangerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#232323',
+    padding: 16,
+    borderRadius: 12,
+    gap: 12,
+  },
+  dangerButtonText: {
+    color: '#EF4444',
+    fontSize: 16,
+    fontWeight: '500',
   },
 }); 

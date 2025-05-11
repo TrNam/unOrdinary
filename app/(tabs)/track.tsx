@@ -233,16 +233,39 @@ export default function TrackScreen() {
   const [selectedDate, setSelectedDate] = React.useState<string>('');
   const [showHistoryModal, setShowHistoryModal] = React.useState(false);
   const [selectedHistory, setSelectedHistory] = React.useState<WorkoutHistory | null>(null);
+  const [workoutStartDate, setWorkoutStartDate] = React.useState<string>('');
   const { useMetric } = useSettingsStore();
 
   // Load splits and update selection whenever the screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       loadSplits();
+      // Set the workout start date when the screen comes into focus
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const currentDate = `${year}-${month}-${day}`;
+      console.log('Setting workout start date:', currentDate);
+      setWorkoutStartDate(currentDate);
+      
+      // Update current day's workout if we have a selected split
+      if (selectedSplit) {
+        const loadSplitData = async () => {
+          try {
+            const fullSplitData = await getSplitWithDaysAndExercises(selectedSplit.id);
+            updateCurrentDayWorkout(fullSplitData);
+          } catch (e) {
+            console.error('Track: Error loading split data:', e);
+          }
+        };
+        loadSplitData();
+      }
+      
       return () => {
         // Don't reset the workout state when tab changes
       };
-    }, [])
+    }, []) // Remove selectedSplit from dependencies
   );
 
   const loadSplits = async () => {
@@ -362,11 +385,15 @@ export default function TrackScreen() {
     setCurrentDayWorkout(prev => {
       const newWorkout = [...prev];
       const exercise = newWorkout[exerciseIndex];
-      exercise.sets.push({
+      const newSets = [...exercise.sets, {
         id: Date.now().toString(),
         weight: 0,
         reps: 0
-      });
+      }];
+      newWorkout[exerciseIndex] = {
+        ...exercise,
+        sets: newSets
+      };
       return newWorkout;
     });
   };
@@ -404,7 +431,7 @@ export default function TrackScreen() {
       
       await saveWorkoutHistory(
         selectedSplit.id,
-        new Date().toISOString().split('T')[0], // Get today's date in YYYY-MM-DD format
+        workoutStartDate, // Use the workout start date instead of current date
         exercisesToSave,
         useMetric
       );
@@ -418,6 +445,7 @@ export default function TrackScreen() {
 
   const handleDayPress = async (day: { dateString: string }) => {
     const date = day.dateString;
+    console.log('Calendar day pressed:', date);
     setSelectedDate(date);
     if (!selectedSplit) return;
 
@@ -425,6 +453,12 @@ export default function TrackScreen() {
       const selectedDateObj = new Date(date + 'T00:00:00');
       const dayOfWeek = selectedDateObj.getDay();
       const adjustedDayOfWeek = dayOfWeek === 0 ? 0 : dayOfWeek - 1;
+
+      console.log('Fetching workout for:', {
+        date,
+        splitId: selectedSplit.id,
+        dayOfWeek: adjustedDayOfWeek
+      });
 
       const history = await getWorkoutHistory(date, selectedSplit.id, adjustedDayOfWeek);
       
@@ -472,7 +506,13 @@ export default function TrackScreen() {
         <View style={styles.exerciseDetails}>
           <Pressable
             style={styles.addSetButton}
-            onPress={() => handleAddSet(index)}
+            onPress={() => {
+              handleAddSet(index);
+              // Keep the exercise expanded after adding a set
+              if (!expandedExercises.has(index)) {
+                toggleExercise(index);
+              }
+            }}
           >
             <MaterialIcons name="add" size={24} color="#3B82F6" />
             <Text style={styles.addSetText}>Add Set</Text>

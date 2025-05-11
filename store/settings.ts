@@ -7,6 +7,7 @@ interface SettingsState {
   useMetric: boolean;
   toggleTheme: () => void;
   toggleUnit: () => void;
+  setUseMetric: (useMetric: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -16,6 +17,7 @@ export const useSettingsStore = create<SettingsState>()(
       useMetric: true,
       toggleTheme: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
       toggleUnit: () => set((state) => ({ useMetric: !state.useMetric })),
+      setUseMetric: (useMetric) => set({ useMetric }),
     }),
     {
       name: 'settings-storage',
